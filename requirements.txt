@@ -1,0 +1,17 @@
+# Note: you need to install torch and tensorflow / tensorflow-gpu depending on your platform. Here we list the Pytorch and tensorflow version that we use when we built this project.
+ffmpeg==1.2.1
+ffprobe==0.5
+librosa==0.6.2
+matplotlib==2.2.3
+nltk==3.4
+nnmnkwii==0.0.17
+numpy==1.15.4
+pycuda==2018.1.1
+pydub==0.23.0
+Pygments==2.2.0
+pypinyin==0.34.1
+scipy==1.2.0
+tensorflow-gpu==1.10.1
+tensorboardX==1.5
+torch==0.4.1
+tqdm==4.29.0

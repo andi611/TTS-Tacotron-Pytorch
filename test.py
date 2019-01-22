@@ -23,9 +23,9 @@ from pypinyin import Style, pinyin
 import torch
 from torch.autograd import Variable
 #--------------------------------#
-from utils import audio
-from utils.text import text_to_sequence, symbols
-from utils.plot import test_visualize, plot_alignment
+from lib import audio
+from lib.text import text_to_sequence, symbols
+from lib.plot import test_visualize, plot_alignment
 #--------------------------------#
 from model.tacotron import Tacotron
 from config import config, get_test_args

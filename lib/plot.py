@@ -12,7 +12,7 @@
 ###############
 import numpy as np
 import librosa.display
-from utils import audio
+from . import audio
 from config import config
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')

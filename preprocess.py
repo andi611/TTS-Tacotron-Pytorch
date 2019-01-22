@@ -17,7 +17,7 @@ import librosa
 import argparse
 import numpy as np
 from tqdm import tqdm
-from utils import data
+from lib import data
 from functools import partial
 from pypinyin import Style, pinyin
 from config import config, get_preprocess_args

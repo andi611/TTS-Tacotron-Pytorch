@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*- #
 """*********************************************************************************************"""
-#   FileName     [ utils.py ]
+#   FileName     [ data.py ]
 #   Synopsis     [ utility functions for preprocess.py ]
 #   Author       [ Ting-Wei Liu (Andi611) ]
 #   Copyright    [ Copyleft(c), Speech Lab, NTU, Taiwan ]
@@ -20,8 +20,8 @@ import numpy as np
 from scipy import signal
 from pydub import AudioSegment
 #----------------------------#
-from utils import audio
-from utils.plot import preprocess_visualization
+from . import audio
+from .plot import preprocess_visualization
 from functools import partial
 from concurrent.futures import ProcessPoolExecutor
 

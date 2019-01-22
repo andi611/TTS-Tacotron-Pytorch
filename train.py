@@ -30,9 +30,9 @@ import time
 import numpy as np
 import librosa.display
 #---------------------#
-from utils import audio
-from utils.plot import plot_alignment, plot_spectrogram
-from utils.text import text_to_sequence, symbols
+from lib import audio
+from lib.plot import plot_alignment, plot_spectrogram
+from lib.text import text_to_sequence, symbols
 #----------------------------------------------#
 import torch
 from torch import nn

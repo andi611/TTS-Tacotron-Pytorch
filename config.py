@@ -29,7 +29,7 @@ class configurations(object):
 	def get_audio_config(self):
 		self.num_mels = 80
 		self.num_freq = 1025
-		self.sample_rate = 22050
+		self.sample_rate = 20000
 		self.frame_length_ms = 50
 		self.frame_shift_ms = 12.5
 		self.preemphasis = 0.97

@@ -14,7 +14,6 @@ import math
 import numpy as np
 import librosa
 import librosa.filters
-import tensorflow as tf
 from scipy import signal
 from config import config
 from scipy.io import wavfile
@@ -56,17 +55,6 @@ def inv_spectrogram(spectrogram):
 	return inv_preemphasis(_griffin_lim(S ** config.power))          # Reconstruct phase
 
 
-def inv_spectrogram_tensorflow(spectrogram):
-	"""
-		Builds computational graph to convert spectrogram to waveform using TensorFlow.
-
-		Unlike inv_spectrogram, this does NOT invert the preemphasis. The caller should call
-		inv_preemphasis on the output after running the graph.
-	"""
-	S = _db_to_amp_tensorflow(_denormalize_tensorflow(spectrogram) + config.ref_level_db)
-	return _griffin_lim_tensorflow(tf.pow(S, config.power))
-
-
 def melspectrogram(y):
 	D = _stft(preemphasis(y))
 	S = _amp_to_db(_linear_to_mel(np.abs(D)))
@@ -97,23 +85,6 @@ def _griffin_lim(S):
 	return y
 
 
-def _griffin_lim_tensorflow(S):
-	"""
-		TensorFlow implementation of Griffin-Lim
-		Based on https://github.com/Kyubyong/tensorflow-exercises/blob/master/Audio_Processing.ipynb
-	"""
-	with tf.variable_scope('griffinlim'):
-		# TensorFlow's stft and istft operate on a batch of spectrograms; create batch of size 1
-		S = tf.expand_dims(S, 0)
-		S_complex = tf.identity(tf.cast(S, dtype=tf.complex64))
-		y = _istft_tensorflow(S_complex)
-		for i in range(config.griffin_lim_iters):
-			est = _stft_tensorflow(y)
-			angles = est / tf.cast(tf.maximum(1e-8, tf.abs(est)), tf.complex64)
-			y = _istft_tensorflow(S_complex * angles)
-		return tf.squeeze(y, 0)
-
-
 def _stft(y):
 	n_fft, hop_length, win_length = _stft_parameters()
 	return librosa.stft(y=y, n_fft=n_fft, hop_length=hop_length, win_length=win_length)
@@ -122,16 +93,6 @@ def _stft(y):
 def _istft(y):
 	_, hop_length, win_length = _stft_parameters()
 	return librosa.istft(y, hop_length=hop_length, win_length=win_length)
-
-
-def _stft_tensorflow(signals):
-	n_fft, hop_length, win_length = _stft_parameters()
-	return tf.contrib.signal.stft(signals, win_length, hop_length, n_fft, pad_end=False)
-
-
-def _istft_tensorflow(stfts):
-	n_fft, hop_length, win_length = _stft_parameters()
-	return tf.contrib.signal.inverse_stft(stfts, win_length, hop_length, n_fft)
 
 
 def _stft_parameters():
@@ -164,14 +125,8 @@ def _amp_to_db(x):
 def _db_to_amp(x):
 	return np.power(10.0, x * 0.05)
 
-def _db_to_amp_tensorflow(x):
-	return tf.pow(tf.ones(tf.shape(x)) * 10.0, x * 0.05)
-
 def _normalize(S):
 	return np.clip((S - config.min_level_db) / -config.min_level_db, 0, 1)
 
 def _denormalize(S):
 	return (np.clip(S, 0, 1) * -config.min_level_db) + config.min_level_db
-
-def _denormalize_tensorflow(S):
-	return (tf.clip_by_value(S, 0, 1) * -config.min_level_db) + config.min_level_db

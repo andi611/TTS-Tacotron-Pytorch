@@ -46,6 +46,7 @@ def dataset_analysis(wav_dir, file_suffix):
 		if d < min_d: min_d = d
 		duration += d
 
+	print('Sample rate: ', sr)
 	print('Speech total length (hr): ', duration / 60**2)
 	print('Max duration (seconds): ', max_d)
 	print('Min duration (seconds): ', min_d)

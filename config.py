@@ -88,7 +88,7 @@ def get_training_args():
 def get_preprocess_args():
 	parser = argparse.ArgumentParser(description='preprocess arguments')
 
-	parser.add_argument('--mode', choices=['make', 'analysis', 'all'], default='all', help='what to preprocess')
+	parser.add_argument('--mode', choices=['make', 'analyze', 'all'], default='all', help='what to preprocess')
 	parser.add_argument('--num_workers', type=int, default=cpu_count(), help='multi-thread processing')
 	parser.add_argument('--file_suffix', type=str, default='wav', help='audio filename extension')
 

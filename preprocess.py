@@ -49,7 +49,7 @@ def dataset_analysis(wav_dir, file_suffix):
 	print('Speech total length (hr): ', duration / 60**2)
 	print('Max duration (seconds): ', max_d)
 	print('Min duration (seconds): ', min_d)
-	print('Average duration (seconds): ', duration / len(all_audio))
+	print('Average duration (seconds): ', duration / len(audios))
 
 
 ########
@@ -63,8 +63,8 @@ def main():
 	if args.mode == 'all' or args.mode == 'make':
 		make_meta(args.text_input_path, args.audio_input_dir, args.meta_dir, args.meta_text, args.file_suffix, args.num_workers, config.frame_shift_ms)
 
-	#---dataset analysis---#
-	elif args.mode == 'all' or args.mode == 'analysis':
+	#---dataset analyze---#
+	elif args.mode == 'all' or args.mode == 'analyze':
 		dataset_analysis(args.audio_input_dir, args.file_suffix)
 	
 	else:

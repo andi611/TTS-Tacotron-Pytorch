@@ -88,35 +88,17 @@ def get_training_args():
 def get_preprocess_args():
 	parser = argparse.ArgumentParser(description='preprocess arguments')
 
-	parser.add_argument('--mode', choices=['text', 'audio', 'meta', 'analysis', 'all'], default='all', help='what to preprocess')
+	parser.add_argument('--mode', choices=['make', 'analysis', 'all'], default='all', help='what to preprocess')
 	parser.add_argument('--num_workers', type=int, default=cpu_count(), help='multi-thread processing')
-	parser.add_argument('--join', type=bool, default=False, help='whether to join the [train, dev, test] transcripts into one joint transcript')
+	parser.add_argument('--file_suffix', type=str, default='wav', help='audio filename extension')
 
 	meta_path = parser.add_argument_group('meta_path')
-	meta_path.add_argument('--meta_audio_dir', type=str, default='../data/meta/', help='path to the model-ready training acoustic features')
+	meta_path.add_argument('--meta_dir', type=str, default='../data/meta/', help='path to the model-ready training acoustic features')
 	meta_path.add_argument('--meta_text', type=str, default='meta_text.txt', help='name of the model-ready training transcripts')
-	
-	audio_path = parser.add_argument_group('audio_path')
-	audio_path.add_argument('--audio_input_dir', type=str, default='../data/audio/original/', help='directory path to the original audio data')
-	audio_path.add_argument('--audio_output_dir', type=str, default='../data/audio/processed/', help='directory path to output the processed audio data')
-	audio_path.add_argument('--visualization_dir', type=str, default='../data/audio/visualization/', help='directory path to output the audio visualization images')
-	
-	text_path = parser.add_argument_group('text_path')
-	text_path.add_argument('--text_dir', type=str, default='../data/text/', help='directory to the text transcripts')
-	text_path.add_argument('--mapper_path', type=str, default='mapper.txt', help='path to the encoding mapper')
-	text_path.add_argument('--text_pinyin_path', type=str, default='../data/text/train_all_pinyin.txt', help='path to the transformed training text transcripts')
 
-	input_path = parser.add_argument_group('text_input_path')
-	input_path.add_argument('--text_input_train_path', type=str, default='train_ori.txt', help='path to the original training text data')
-	input_path.add_argument('--text_input_dev_path', type=str, default='dev_ori.txt', help='path to the original development text data')
-	input_path.add_argument('--text_input_test_path', type=str, default='test_ori.txt', help='path to the original testing text data')
-	input_path.add_argument('--text_input_raw_path', type=str, default='../data/text/train_all.txt', help='path to the raw text transcripts')
-	
-	output_path = parser.add_argument_group('text_output_path')
-	output_path.add_argument('--text_output_train_path', type=str, default='train.txt', help='path to the processed training text data')
-	output_path.add_argument('--text_output_dev_path', type=str, default='dev.txt', help='path to the processed development text data')
-	output_path.add_argument('--text_output_test_path', type=str, default='test.txt', help='path to the processed testing text data')
-	output_path.add_argument('--all_text_output_path', type=str, default='train_all.txt', help='path to the joint processed text data')
+	input_path = parser.add_argument_group('input_path')
+	input_path.add_argument('--text_input_path', type=str, default='train_ori.txt', help='path to the original training text data')
+	input_path.add_argument('--audio_input_dir', type=str, default='dev_ori.txt', help='path to the original development text data')
 
 	args = parser.parse_args()
 	return args

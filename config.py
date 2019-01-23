@@ -29,7 +29,7 @@ class configurations(object):
 	def get_audio_config(self):
 		self.num_mels = 80
 		self.num_freq = 1025
-		self.sample_rate = 20000
+		self.sample_rate = 22050
 		self.frame_length_ms = 50
 		self.frame_shift_ms = 12.5
 		self.preemphasis = 0.97
@@ -72,9 +72,9 @@ config = configurations()
 def get_training_args():
 	parser = argparse.ArgumentParser(description='training arguments')
 
-	parser.add_argument('--checkpoint_dir', type=str, default='../ckpt_train', help='Directory where to save model checkpoints')
+	parser.add_argument('--checkpoint_dir', type=str, default='./ckpt_train', help='Directory where to save model checkpoints')
 	parser.add_argument('--checkpoint_path', type=str, default=None, help='Restore model from checkpoint path if given')
-	parser.add_argument('--data_root', type=str, default='../data/meta', help='Directory contains preprocessed features')
+	parser.add_argument('--data_root', type=str, default='./meta', help='Directory that contains preprocessed model-ready features')
 	parser.add_argument('--meta_text', type=str, default='meta_text.txt', help='Model-ready training transcripts')
 	parser.add_argument('--summary_comment', type=str, default=None, help='Comment for log summary writer')
 
@@ -115,11 +115,11 @@ def get_test_args():
 	parser.add_argument('--interactive', action='store_true', help='whether to test in an interactive mode')
 
 	path_parser = parser.add_argument_group('path')
-	path_parser.add_argument('--result_dir', type=str, default='../result/', help='path to output test results')
-	path_parser.add_argument('--ckpt_dir', type=str, default='../ckpt/', help='path to the directory where model checkpoints are saved')
+	path_parser.add_argument('--result_dir', type=str, default='./result/', help='path to output test results')
+	path_parser.add_argument('--ckpt_dir', type=str, default='./ckpt/', help='path to the directory where model checkpoints are saved')
 	path_parser.add_argument('--checkpoint_name', type=str, default='checkpoint_step', help='model name prefix for checkpoint files')
 	path_parser.add_argument('--model', type=str, default='480000', help='model step name for checkpoint files')
-	path_parser.add_argument('--test_file_path', type=str, default='../data/text/test_sample.txt', help='path to the input test transcripts')
+	path_parser.add_argument('--test_file_path', type=str, default='./data/text/test_sample.txt', help='path to the input test transcripts')
 	
 	args = parser.parse_args()
 	return args

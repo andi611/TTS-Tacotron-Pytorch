@@ -14,7 +14,7 @@ import os
 import glob
 import librosa
 import argparse
-from lib import data
+from utils import data
 from tqdm import tqdm
 from config import config, get_preprocess_args
 

@@ -28,29 +28,6 @@ nfft = (config.num_freq - 1) * 2
 hop_length = config.hop_length
 
 
-############################
-# PREPROCESS VISUALIZATION #
-############################
-"""
-	visualize the preprocessed waveforms
-"""
-def preprocess_visualization(name, y, yt, sr, output_dir, visualization_dir, vis_process):
-	#---visualization---#
-	plt.figure(figsize=(16, 4))
-	if vis_process:
-		plt.subplot(2, 1, 1)
-		librosa.display.waveplot(yt, sr=sr, color='r')
-		plt.title('Processed Waveform')
-		plt.subplot(2, 1, 2)
-	librosa.display.waveplot(y, sr=sr, color='tab:orange')
-	plt.title('Original Waveform')
-	plt.tight_layout()
-
-	#---save---#
-	plt.savefig(visualization_dir + name + '.jpeg')
-	plt.close()
-
-
 ##################
 # PLOT ALIGNMENT #
 ##################

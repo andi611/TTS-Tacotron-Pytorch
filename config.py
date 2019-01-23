@@ -93,12 +93,12 @@ def get_preprocess_args():
 	parser.add_argument('--file_suffix', type=str, default='wav', help='audio filename extension')
 
 	meta_path = parser.add_argument_group('meta_path')
-	meta_path.add_argument('--meta_dir', type=str, default='../data/meta/', help='path to the model-ready training acoustic features')
+	meta_path.add_argument('--meta_dir', type=str, default='./meta/', help='path to the model-ready training acoustic features')
 	meta_path.add_argument('--meta_text', type=str, default='meta_text.txt', help='name of the model-ready training transcripts')
 
 	input_path = parser.add_argument_group('input_path')
-	input_path.add_argument('--text_input_path', type=str, default='train_ori.txt', help='path to the original training text data')
-	input_path.add_argument('--audio_input_dir', type=str, default='dev_ori.txt', help='path to the original development text data')
+	input_path.add_argument('--text_input_path', type=str, default='LJSpeech-1.1/metadata.csv', help='path to the original training text data')
+	input_path.add_argument('--audio_input_dir', type=str, default='LJSpeech-1.1/wavs/', help='path to the original training audio data')
 
 	args = parser.parse_args()
 	return args

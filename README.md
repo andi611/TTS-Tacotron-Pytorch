@@ -1,5 +1,5 @@
 # Tacotron
-A Pytorch implementation of Tacotron, a speech synthesis end-to-end generative TTS model proposed by Google.  
+A Pytorch implementation of Google's Tacotron speech synthesis with pre-trained model (unofficial)
 
 ## Quick Start
 
@@ -31,10 +31,9 @@ A Pytorch implementation of Tacotron, a speech synthesis end-to-end generative T
 
 ### Training
 
-*Note: We trained our model on our own dataset: LectureDSP. Currently this dataset is not available for public release and remains a private collection in the lab. See 'report.pdf' for more information about this dataset.*
-
 1. **Download the LJ Speech dataset.**
 	* [LJ Speech](https://keithito.com/LJ-Speech-Dataset/)
+	
 	You can use other datasets if you convert them to the right format. See [TRAINING_DATA.md](https://github.com/keithito/tacotron/blob/master/TRAINING_DATA.md) for more info.
 
 2. **Unpack the dataset into `~/Tacotron-Pytorch`**
@@ -57,16 +56,16 @@ A Pytorch implementation of Tacotron, a speech synthesis end-to-end generative T
 	python3 train.py
 	```
 
-	Tunable hyperparameters are found in [config.py](config.py). You can adjust these parameters and setting by editing the file.
-	The default hyperparameters are recommended for LJ Speech.
-
+	Tunable hyperparameters are found in [config.py](config.py). 
+	
+	You can adjust these parameters and setting by editing the file, the default hyperparameters are recommended for LJ Speech.
 
 6. **Monitor with TensorboardX** (optional)
 	```
 	tensorboard --logdir 'path to log dir'
 	```
 
-	The trainer dumps audio and alignments every 2000 steps by default. You can find these in `CS-tacotron/ckpt`.
+	The trainer dumps audio and alignments every 2000 steps by default. You can find these in `tacotron/ckpt`.
 
 
 ## Acknowledgement

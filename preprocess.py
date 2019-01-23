@@ -23,7 +23,7 @@ from config import config, get_preprocess_args
 # MAKE META #
 #############
 def make_meta(text_input_path, audio_input_dir, meta_dir, meta_text, file_suffix, num_workers, frame_shift_ms):
-	os.makedirs(meta_audio_dir, exist_ok=True)
+	os.makedirs(meta_dir, exist_ok=True)
 	metadata = data.build_from_path(text_input_path, audio_input_dir, meta_dir, file_suffix, num_workers, tqdm=tqdm)
 	data.write_meta_data(metadata, meta_dir, meta_text, frame_shift_ms)
 

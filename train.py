@@ -242,8 +242,6 @@ def tacotron_step(model, optimizer, criterion,
 	for param_group in optimizer.param_groups:
 		param_group['lr'] = current_lr
 
-	optimizer.zero_grad()
-
 	#---sort by length---#
 	sorted_lengths, indices = torch.sort(input_lengths.view(-1), dim=0, descending=True)
 	sorted_lengths = sorted_lengths.long().numpy()
@@ -268,6 +266,7 @@ def tacotron_step(model, optimizer, criterion,
 	linear_L = linear_loss.item()
 
 	#---update model---#
+	optimizer.zero_grad()
 	loss.backward()
 	grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), clip_thresh)
 	optimizer.step()

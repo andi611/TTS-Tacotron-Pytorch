@@ -185,15 +185,11 @@ class Decoder(nn.Module):
 		self.r = r
 		self.prenet = Prenet(in_dim * r, sizes=[256, 128])
 		# (prenet_out + attention context) -> output
-		self.attention_rnn = AttentionWrapper(
-			nn.GRUCell(256 + 128, 256),
-			BahdanauAttention(256)
-		)
+		self.attention_rnn = AttentionWrapper(nn.GRUCell(256 + 128, 256), BahdanauAttention(256))
 		self.memory_layer = nn.Linear(256, 256, bias=False)
 		self.project_to_decoder_in = nn.Linear(512, 256)
 
-		self.decoder_rnns = nn.ModuleList(
-			[nn.GRUCell(256, 256) for _ in range(2)])
+		self.decoder_rnns = nn.ModuleList([nn.GRUCell(256, 256) for _ in range(2)])
 
 		self.proj_to_mel = nn.Linear(256, in_dim * r)
 		self.max_decoder_steps = 200
@@ -201,8 +197,7 @@ class Decoder(nn.Module):
 	"""
 		Decoder forward step.
 
-		If decoder inputs are not given (e.g., at testing time), as noted in
-		Tacotron paper, greedy decoding is adapted.
+		If decoder inputs are not given (e.g., at testing time), as noted in Tacotron paper, greedy decoding is adapted.
 
 		Args:
 			encoder_outputs: Encoder outputs. (B, T_encoder, dim)
@@ -234,8 +229,7 @@ class Decoder(nn.Module):
 
 		
 		attention_rnn_hidden = Variable(encoder_outputs.data.new(B, 256).zero_()) # Init decoder states
-		decoder_rnn_hiddens = [Variable(encoder_outputs.data.new(B, 256).zero_())
-								for _ in range(len(self.decoder_rnns))]
+		decoder_rnn_hiddens = [Variable(encoder_outputs.data.new(B, 256).zero_()) for _ in range(len(self.decoder_rnns))]
 		current_attention = Variable(encoder_outputs.data.new(B, 256).zero_())
 
 		if inputs is not None: # Time first (T_decoder, B, in_dim)
@@ -262,9 +256,7 @@ class Decoder(nn.Module):
 
 			# Pass through the decoder RNNs
 			for idx in range(len(self.decoder_rnns)):
-				decoder_rnn_hiddens[idx] = self.decoder_rnns[idx](
-										   decoder_input, decoder_rnn_hiddens[idx])
-				
+				decoder_rnn_hiddens[idx] = self.decoder_rnns[idx](decoder_input, decoder_rnn_hiddens[idx])				
 				decoder_input = decoder_rnn_hiddens[idx] + decoder_input # Residual connectinon
 
 			output = decoder_input

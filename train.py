@@ -56,28 +56,19 @@ global_epoch = 0
 USE_CUDA = torch.cuda.is_available()
 if USE_CUDA:
 	cudnn.benchmark = False
-DATA_ROOT = None
-META_TEXT = None
 
-
-def _pad(seq, max_len):
-	return np.pad(seq, (0, max_len - len(seq)),
-				  mode='constant', constant_values=0)
-
-def _pad_2d(x, max_len):
-	x = np.pad(x, [(0, max_len - len(x)), (0, 0)],
-			   mode="constant", constant_values=0)
-	return x
 
 ####################
 # TEXT DATA SOURCE #
 ####################
 class TextDataSource(FileDataSource):
-	def __init__(self):
-		pass #self._cleaner_names = [x.strip() for x in hparams.cleaners.split(',')]
+	def __init__(self, data_root, meta_text):
+		self.data_root = data_root
+		self.meta_text = meta_text
+		#self._cleaner_names = [x.strip() for x in hparams.cleaners.split(',')]
 
 	def collect_files(self):
-		meta = os.path.join(DATA_ROOT, META_TEXT)
+		meta = os.path.join(self.data_root, self.meta_text)
 		with open(meta, 'r', encoding='utf-8') as f:
 			lines = f.readlines()
 		lines = list(map(lambda l: l.split("|")[-1][:-1], lines))
@@ -91,11 +82,13 @@ class TextDataSource(FileDataSource):
 # NPY DATA SOURCE #
 ###################
 class _NPYDataSource(FileDataSource):
-	def __init__(self, col):
+	def __init__(self, col, data_root, meta_text):
 		self.col = col
+		self.data_root = data_root
+		self.meta_text = meta_text
 
 	def collect_files(self):
-		meta = os.path.join(DATA_ROOT, META_TEXT)
+		meta = os.path.join(self.data_root, self.meta_text)
 		with open(meta, 'r', encoding='utf-8') as f:
 			lines = f.readlines()
 		lines = list(map(lambda l: l.split("|")[self.col], lines))
@@ -110,22 +103,22 @@ class _NPYDataSource(FileDataSource):
 # MEL SPEC DATA SOURCE #
 ########################
 class MelSpecDataSource(_NPYDataSource):
-	def __init__(self):
-		super(MelSpecDataSource, self).__init__(1)
+	def __init__(self, data_root, meta_text):
+		super(MelSpecDataSource, self).__init__(1, data_root, meta_text)
 
 
 ###########################
 # LINEAR SPEC DATA SOURCE #
 ###########################
 class LinearSpecDataSource(_NPYDataSource):
-	def __init__(self):
-		super(LinearSpecDataSource, self).__init__(0)
+	def __init__(self, data_root, meta_text):
+		super(LinearSpecDataSource, self).__init__(0, data_root, meta_text)
 
 
 #######################
 # PYTORCH DATA SOURCE #
 #######################
-class PyTorchDataset(object):
+class PyTorchDatasetWrapper(object):
 	def __init__(self, X, Mel, Y):
 		self.X = X
 		self.Mel = Mel
@@ -145,7 +138,12 @@ class PyTorchDataset(object):
 	Create batch
 """
 def collate_fn(batch):
-	
+	def _pad(seq, max_len):
+		return np.pad(seq, (0, max_len - len(seq)), mode='constant', constant_values=0)
+
+	def _pad_2d(x, max_len):
+		return np.pad(x, [(0, max_len - len(x)), (0, 0)], mode="constant", constant_values=0)
+		
 	r = config.outputs_per_step
 	input_lengths = [len(x[0]) for x in batch]
 	max_input_len = np.max(input_lengths)
@@ -297,7 +295,8 @@ def train(model,
 		  init_lr=0.002,
 		  checkpoint_dir=None, 
 		  checkpoint_interval=None, 
-		  nepochs=None,
+		  max_epochs=None,
+		  max_steps=None,
 		  clip_thresh=1.0,
 		  sample_rate=20000):
 
@@ -311,7 +310,7 @@ def train(model,
 	criterion = nn.L1Loss()
 
 
-	while global_epoch < nepochs:
+	while global_epoch < max_epochs and global_step < max_steps:
 		
 		start = time.time()
 		running_loss = 0.
@@ -365,15 +364,15 @@ def train(model,
 """
 	Setup and prepare for Tacotron training.
 """
-def initialize_training(checkpoint_path):
+def initialize_training(checkpoint_path, data_root, meta_text):
 	
 	# Input dataset definitions
-	X = FileSourceDataset(TextDataSource())
-	Mel = FileSourceDataset(MelSpecDataSource())
-	Y = FileSourceDataset(LinearSpecDataSource())
+	X = FileSourceDataset(TextDataSource(data_root, meta_text))
+	Mel = FileSourceDataset(MelSpecDataSource(data_root, meta_text))
+	Y = FileSourceDataset(LinearSpecDataSource(data_root, meta_text))
 
 	# Dataset and Dataloader setup
-	dataset = PyTorchDataset(X, Mel, Y)
+	dataset = PyTorchDatasetWrapper(X, Mel, Y)
 	data_loader = data.DataLoader(dataset, 
 								  batch_size=config.batch_size,
 								  num_workers=config.num_workers, 
@@ -418,25 +417,18 @@ def main():
 
 	args = get_training_args()
 
-	global DATA_ROOT, META_TEXT
-	if args.data_root != None:
-		DATA_ROOT = args.data_root
-	if args.meta_text != None:
-		META_TEXT = args.meta_text
+	os.makedirs(args.checkpoint_dir, exist_ok=True)
 
-	checkpoint_dir = args.checkpoint_dir
-	checkpoint_path = args.checkpoint_path
-	os.makedirs(checkpoint_dir, exist_ok=True)
-
-	model, optimizer, data_loader = initialize_training(checkpoint_path)
+	model, optimizer, data_loader = initialize_training(args.checkpoint_path, args.data_root, args.meta_text)
 
 	# Train!
 	try:
 		train(model, optimizer, data_loader, args.summary_comment,
 			  init_lr=config.initial_learning_rate,
-			  checkpoint_dir=checkpoint_dir,
+			  checkpoint_dir=args.checkpoint_dir,
 			  checkpoint_interval=config.checkpoint_interval,
-			  nepochs=config.nepochs,
+			  max_epochs=config.max_epochs,
+			  max_steps=config.max_steps,
 			  clip_thresh=config.clip_thresh,
 			  sample_rate=config.sample_rate)
 	except KeyboardInterrupt:

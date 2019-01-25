@@ -45,7 +45,7 @@ class configurations(object):
 
 	def get_dataloader_config(self):
 		self.pin_memory = True
-		self.num_workers = 2
+		self.num_workers = cpu_count() # or just set 2
 
 	def get_training_config(self):
 		self.batch_size = 16
@@ -53,7 +53,8 @@ class configurations(object):
 		self.adam_beta2 = 0.999
 		self.initial_learning_rate = 0.002
 		self.decay_learning_rate = True
-		self.nepochs = 1000
+		self.max_epochs = 1000
+		self.max_steps = 500000
 		self.weight_decay = 0.0
 		self.clip_thresh = 1.0
 		self.checkpoint_interval = 2000

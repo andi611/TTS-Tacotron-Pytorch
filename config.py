@@ -75,7 +75,7 @@ def get_training_args():
 
 	parser.add_argument('--checkpoint_dir', type=str, default='./ckpt_train', help='Directory where to save model checkpoints')
 	parser.add_argument('--checkpoint_path', type=str, default=None, help='Restore model from checkpoint path if given')
-	parser.add_argument('--data_root', type=str, default='./meta', help='Directory that contains preprocessed model-ready features')
+	parser.add_argument('--data_root', type=str, default='./data/meta', help='Directory that contains preprocessed model-ready features')
 	parser.add_argument('--meta_text', type=str, default='meta_text.txt', help='Model-ready training transcripts')
 	parser.add_argument('--summary_comment', type=str, default=None, help='Comment for log summary writer')
 
@@ -98,8 +98,8 @@ def get_preprocess_args():
 	meta_path.add_argument('--meta_text', type=str, default='meta_text.txt', help='name of the model-ready training transcripts')
 
 	input_path = parser.add_argument_group('input_path')
-	input_path.add_argument('--text_input_path', type=str, default='LJSpeech-1.1/metadata.csv', help='path to the original training text data')
-	input_path.add_argument('--audio_input_dir', type=str, default='LJSpeech-1.1/wavs/', help='path to the original training audio data')
+	input_path.add_argument('--text_input_path', type=str, default='./data/LJSpeech-1.1/metadata.csv', help='path to the original training text data')
+	input_path.add_argument('--audio_input_dir', type=str, default='./data/LJSpeech-1.1/wavs/', help='path to the original training audio data')
 
 	args = parser.parse_args()
 	return args
@@ -120,7 +120,7 @@ def get_test_args():
 	path_parser.add_argument('--ckpt_dir', type=str, default='./ckpt/', help='path to the directory where model checkpoints are saved')
 	path_parser.add_argument('--checkpoint_name', type=str, default='checkpoint_step', help='model name prefix for checkpoint files')
 	path_parser.add_argument('--model', type=str, default='480000', help='model step name for checkpoint files')
-	path_parser.add_argument('--test_file_path', type=str, default='./data/text/test_sample.txt', help='path to the input test transcripts')
+	path_parser.add_argument('--test_file_path', type=str, default='./data/test_transcripts.txt', help='path to the input test transcripts')
 	
 	args = parser.parse_args()
 	return args

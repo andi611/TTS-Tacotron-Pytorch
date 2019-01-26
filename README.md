@@ -36,19 +36,34 @@ A Pytorch implementation of Google's Tacotron speech synthesis with pre-trained 
 	
 	You can use other datasets if you convert them to the right format. See [TRAINING_DATA.md](https://github.com/keithito/tacotron/blob/master/TRAINING_DATA.md) for more info.
 
-2. **Unpack the dataset into `~/Tacotron-Pytorch`**
+2. **Unpack the dataset into `~/Tacotron-Pytorch/data`**
 
-   After unpacking, your tree should look like this for LJ Speech:
-   ```
-   Tacotron-Pytorch
-	 |- LJSpeech-1.1
-		 |- metadata.csv
-		 |- wavs
-   ```
+	After unpacking, your tree should look like this for LJ Speech:
+	```
+ |- Tacotron-Pytorch
+	 |- data
+		 |- LJSpeech-1.1
+			 |- metadata.csv
+			 |- wavs
+	```
 
 3. **Preprocess the LJ Speech dataset and make model-ready meta files using [preprocess.py](preprocess.py):**
 	```
 	python3 preprocess.py --mode make
+	```
+
+	After preprocessing, your tree will look like this:
+	```
+ |- Tacotron-Pytorch
+	 |- data
+		 |- LJSpeech-1.1 (The downloaded dataset)
+			 |- metadata.csv
+			 |- wavs
+		 |- meta (generate by preprocessing)
+			 |- meta_text.txt 
+			 |- meta_mel_xxxxx.npy ...
+			 |- meta_spec_xxxxx.npy ...
+		 |- test_transcripts.txt (provided)
 	```
 
 4. **Train a model using [train.py](train.py)**

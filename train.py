@@ -92,7 +92,7 @@ class _NPYDataSource(FileDataSource):
 		with open(meta, 'r', encoding='utf-8') as f:
 			lines = f.readlines()
 		lines = list(map(lambda l: l.split("|")[self.col], lines))
-		paths = list(map(lambda f: os.path.join(DATA_ROOT, f), lines))
+		paths = list(map(lambda f: os.path.join(self.data_root, f), lines))
 		return paths
 
 	def collect_features(self, path):

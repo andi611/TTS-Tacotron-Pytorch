@@ -249,11 +249,6 @@ def tacotron_step(model, optimizer, criterions,
 		x, mel, y, gate, = x.cuda(), mel.cuda(), y.cuda(), gate.cuda()
 	mel_outputs, linear_outputs, attn, gate_outputs = model(x, mel, input_lengths=sorted_lengths)
 
-	print(mel_outputs.size())
-	print(linear_outputs.size())
-	print(gate_outputs.size())
-	print(gate.size())
-
 	#---Loss---#
 	mel_loss = criterions[0](mel_outputs, mel)
 	n_priority_freq = int(3000 / (sample_rate * 0.5) * model.linear_dim)
@@ -284,7 +279,6 @@ def tacotron_step(model, optimizer, criterions,
 		   'mel_L' : mel_L,
 		   'linear_L' : linear_L,
 		   'gate_L' : gate_L }
-
 
 	return model, optimizer, Ms, Ls
 
@@ -332,7 +326,6 @@ def train(model,
 			current_lr = Ms['current_lr']
 
 			total_L = Rs['total_L']
-			avg_L = Rs['avg_L']
 			mel_L = Rs['mel_L']
 			linear_L = Rs['linear_L']
 			gate_L = Rs['gate_L']

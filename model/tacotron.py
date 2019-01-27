@@ -191,8 +191,8 @@ class Decoder(nn.Module):
 
 		self.decoder_rnns = nn.ModuleList([nn.GRUCell(256, 256) for _ in range(2)])
 
-		self.proj_to_mel = nn.Linear(256, in_dim * r)
-		self.proj_to_gate = nn.Linear(in_dim * r, 1)
+		self.proj_to_mel = nn.Linear(256, in_dim * self.r)
+		self.proj_to_gate = nn.Linear(256, 1 * self.r)
 		self.sigmoid = nn.Sigmoid()
 
 		self.max_decoder_steps = 200
@@ -265,8 +265,8 @@ class Decoder(nn.Module):
 				decoder_input = decoder_rnn_hiddens[idx] + decoder_input # Residual connectinon
 
 			output = decoder_input
-			output = self.proj_to_mel(output)
 			gate = self.sigmoid(self.proj_to_gate(output)).squeeze()
+			output = self.proj_to_mel(output)
 
 			outputs += [output]
 			alignments += [alignment]

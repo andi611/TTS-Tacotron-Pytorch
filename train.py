@@ -253,7 +253,7 @@ def tacotron_step(model, optimizer, criterions,
 	print(linear_outputs.size())
 	print(gate_outputs.size())
 	print(gate.size())
-	
+
 	#---Loss---#
 	mel_loss = criterions[0](mel_outputs, mel)
 	n_priority_freq = int(3000 / (sample_rate * 0.5) * model.linear_dim)
@@ -265,6 +265,7 @@ def tacotron_step(model, optimizer, criterions,
 	total_L = loss.item()
 	mel_L = mel_loss.item()
 	linear_L = linear_loss.item()
+	gate_L = gate_loss.item()
 
 	#---update model---#
 	optimizer.zero_grad()
@@ -281,7 +282,8 @@ def tacotron_step(model, optimizer, criterions,
 		   'current_lr' : current_lr }
 	Ls = { 'total_L': total_L,
 		   'mel_L' : mel_L,
-		   'linear_L' : linear_L }
+		   'linear_L' : linear_L,
+		   'gate_L' : gate_L }
 
 
 	return model, optimizer, Ms, Ls
@@ -333,15 +335,16 @@ def train(model,
 			avg_L = Rs['avg_L']
 			mel_L = Rs['mel_L']
 			linear_L = Rs['linear_L']
+			gate_L = Rs['gate_L']
 
 			duration = time.time() - start
 			if global_step > 0 and global_step % checkpoint_interval == 0:
 				save_states(global_step, mel_outputs, linear_outputs, attn, y, checkpoint_dir)
 				save_checkpoint(model, optimizer, global_step, checkpoint_dir, global_epoch)
-				log = '[{}] total_L: {:.3f}, mel_L: {:.3f}, linear_L: {:.3f}, grad_norm: {:.3f}, lr: {:.5f}, t: {:.2f}s, saved: T'.format(global_step, total_L, mel_L, linear_L, grad_norm, current_lr, duration)
+				log = '[{}] total_L: {:.3f}, mel_L: {:.3f}, linear_L: {:.3f}, gate_L: {:.3f}, grad_norm: {:.3f}, lr: {:.5f}, t: {:.2f}s, saved: T'.format(global_step, total_L, mel_L, linear_L, gate_L, grad_norm, current_lr, duration)
 				print(log)
 			elif global_step % 5 == 0:
-				log = '[{}] total_L: {:.3f}, mel_L: {:.3f}, linear_L: {:.3f}, grad_norm: {:.3f}, lr: {:.5f}, t: {:.2f}s, saved: F'.format(global_step, total_L, mel_L, linear_L, grad_norm, current_lr, duration)
+				log = '[{}] total_L: {:.3f}, mel_L: {:.3f}, linear_L: {:.3f}, gate_L: {:.3f}, grad_norm: {:.3f}, lr: {:.5f}, t: {:.2f}s, saved: F'.format(global_step, total_L, mel_L, linear_L, gate_L, grad_norm, current_lr, duration)
 				print(log, end='\r')
 
 			# Logs

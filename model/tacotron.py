@@ -298,6 +298,8 @@ class Decoder(nn.Module):
 		outputs = torch.stack(outputs).transpose(0, 1).contiguous()
 		gates = torch.stack(gates).transpose(0, 1).contiguous()
 		if memory_lengths is not None:
+			print(mask_gate.size())
+			print(gates.size())
 			gates.data.masked_fill_(mask_gate[:, :], 1e3) # gate energies
 
 		return outputs, alignments, gates

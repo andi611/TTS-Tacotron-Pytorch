@@ -192,7 +192,7 @@ class Decoder(nn.Module):
 		self.decoder_rnns = nn.ModuleList([nn.GRUCell(256, 256) for _ in range(2)])
 
 		self.proj_to_mel = nn.Linear(256, in_dim * r)
-		self.proj_to_gate = nn.sigmoid(nn.Linear(256, 1))
+		self.proj_to_gate = nn.Sigmoid(nn.Linear(256, 1))
 		self.max_decoder_steps = 200
 
 	"""

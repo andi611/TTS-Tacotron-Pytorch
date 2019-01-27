@@ -265,8 +265,8 @@ class Decoder(nn.Module):
 				decoder_input = decoder_rnn_hiddens[idx] + decoder_input # Residual connectinon
 
 			output = decoder_input
-			output = self.proj_to_mel(output)
 			gate = self.sigmoid(self.proj_to_gate(output))
+			output = self.proj_to_mel(output)
 
 			outputs += [output]
 			alignments += [alignment]

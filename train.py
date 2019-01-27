@@ -252,7 +252,7 @@ def tacotron_step(model, optimizer, criterions,
 	#---Loss---#
 	mel_loss = criterions[0](mel_outputs, mel)
 	n_priority_freq = int(3000 / (sample_rate * 0.5) * model.linear_dim)
-	linear_loss = 0.5 * criterion[0](linear_outputs, y) + 0.5 * criterion[0](linear_outputs[:, :, :n_priority_freq], y[:, :, :n_priority_freq])
+	linear_loss = 0.5 * criterions[0](linear_outputs, y) + 0.5 * criterions[0](linear_outputs[:, :, :n_priority_freq], y[:, :, :n_priority_freq])
 	gate_loss = criterions[1](gate_outputs, gate)
 	loss = mel_loss + linear_loss + gate_loss
 	

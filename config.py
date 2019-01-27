@@ -41,7 +41,7 @@ class configurations(object):
 		self.embedding_dim = 256
 		self.outputs_per_step = 5
 		self.padding_idx = None
-		self.use_memory_mask = True
+		self.use_mask = True
 
 	def get_dataloader_config(self):
 		self.pin_memory = True

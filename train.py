@@ -342,9 +342,9 @@ def train(model,
 
 			# Logs
 			writer.add_scalar('total_loss', total_L, global_step)
-			writer.add_scalar('averaged_loss', avg_L, global_step)
 			writer.add_scalar('mel_loss', mel_L, global_step)
 			writer.add_scalar('linear_loss', linear_L, global_step)
+			writer.add_scalar('gate_loss', gate_L, global_step)
 			writer.add_scalar('grad_norm', grad_norm, global_step)
 			writer.add_scalar('learning_rate', current_lr, global_step)
 

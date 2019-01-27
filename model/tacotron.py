@@ -296,6 +296,7 @@ class Decoder(nn.Module):
 		alignments = torch.stack(alignments).transpose(0, 1)
 		outputs = torch.stack(outputs).transpose(0, 1).contiguous()
 		gates = torch.stack(gates).transpose(0, 1).contiguous()
+        gates.data.masked_fill_(mask[:, :], 1e3) # gate energies
 
 		return outputs, alignments, gates
 
@@ -347,4 +348,4 @@ class Tacotron(nn.Module):
 		linear_outputs = self.postnet(mel_outputs)
 		linear_outputs = self.last_linear(linear_outputs)
 
-		return mel_outputs, linear_outputs, alignments, gate_outputs
+		return mel_outputs, linear_outputs, gate_outputs, alignments

@@ -42,6 +42,7 @@ import torch.backends.cudnn as cudnn
 from torch.utils import data
 #----------------------------------------#
 from model.tacotron import Tacotron
+from model.loss import TacotronLoss
 from config import config, get_training_args
 #------------------------------------------#
 from nnmnkwii.datasets import FileSourceDataset, FileDataSource
@@ -235,9 +236,9 @@ def save_checkpoint(model, optimizer, step, checkpoint_dir, epoch):
 """
 	One step of training: Train a single batch of data on Tacotron
 """
-def tacotron_step(model, optimizer, criterions,
+def tacotron_step(model, optimizer, criterion,
 				  x, mel, y, gate, sorted_lengths, 
-				  init_lr, sample_rate, clip_thresh, global_step):
+				  init_lr, clip_thresh, global_step):
 	
 	#---decay learning rate---#
 	current_lr = _learning_rate_decay(init_lr, global_step)
@@ -247,20 +248,15 @@ def tacotron_step(model, optimizer, criterions,
 	#---feed data---#
 	if USE_CUDA:
 		x, mel, y, gate, = x.cuda(), mel.cuda(), y.cuda(), gate.cuda()
-	mel_outputs, linear_outputs, attn, gate_outputs = model(x, mel, input_lengths=sorted_lengths)
+	mel_outputs, linear_outputs, gate_outputs, attn = model(x, mel, input_lengths=sorted_lengths)
 
-	#---Loss---#
-	mel_loss = criterions[0](mel_outputs, mel)
-	n_priority_freq = int(3000 / (sample_rate * 0.5) * model.linear_dim)
-	linear_loss = 0.5 * criterions[0](linear_outputs, y) + 0.5 * criterions[0](linear_outputs[:, :, :n_priority_freq], y[:, :, :n_priority_freq])
-	gate_loss = criterions[1](gate_outputs, gate)
-	loss = mel_loss + linear_loss + gate_loss
+	losses = criterion([mel_outputs, linear_outputs, gate_outputs], [mel, linear, gate])
 	
 	#---log loss---#
-	total_L = loss.item()
-	mel_L = mel_loss.item()
-	linear_L = linear_loss.item()
-	gate_L = gate_loss.item()
+	loss, total_L = losses[0], losses[0].item()
+	mel_loss, mel_L = losses[1], losses[1].item(), 
+	linear_loss, linear_L = losses[2], losses[2].item()
+	gate_loss, gate_L = losses[3], losses[3].item()
 
 	#---update model---#
 	optimizer.zero_grad()
@@ -302,7 +298,7 @@ def train(model,
 		model = model.cuda()
 	
 	model.train()
-	criterions = (nn.L1Loss(), nn.BCEWithLogitsLoss())
+	criterion = TacotronLoss(sample_rate, model.linear_dim)
 	
 	writer = SummaryWriter() if summary_comment == None else SummaryWriter(summary_comment)
 
@@ -314,9 +310,9 @@ def train(model,
 		
 		for x, mel, y, gate, sorted_lengths in data_loader:
 			
-			model, optimizer, Ms, Rs = tacotron_step(model, optimizer, criterions,
+			model, optimizer, Ms, Rs = tacotron_step(model, optimizer, criterion,
 												 	x, mel, y, gate, sorted_lengths,
-												 	init_lr, sample_rate, clip_thresh, global_step)
+												 	init_lr, clip_thresh, global_step)
 
 			mel_outputs = Ms['mel_outputs']
 			linear_outputs = Ms['linear_outputs']

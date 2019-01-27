@@ -215,6 +215,7 @@ class Decoder(nn.Module):
 		processed_memory = self.memory_layer(encoder_outputs)
 		if memory_lengths is not None:
 			mask = get_mask_from_lengths(processed_memory, memory_lengths)
+			mask_gate = ~get_mask_from_lengths(memory_lengths)
 		else:
 			mask = None
 
@@ -296,7 +297,8 @@ class Decoder(nn.Module):
 		alignments = torch.stack(alignments).transpose(0, 1)
 		outputs = torch.stack(outputs).transpose(0, 1).contiguous()
 		gates = torch.stack(gates).transpose(0, 1).contiguous()
-		gates.data.masked_fill_(mask[:, :], 1e3) # gate energies
+		if memory_lengths is not None:
+			gates.data.masked_fill_(mask_gate[:, :], 1e3) # gate energies
 
 		return outputs, alignments, gates
 

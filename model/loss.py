@@ -61,7 +61,7 @@ def get_rnn_mask_from_lengths(memory, memory_lengths):
 # GET MASK FROM LENGTHS #
 #########################
 def get_gate_mask_from_lengths(lengths):
-	lengths = torch.LongTensor(lengths)
+	lengths = torch.LongTensor(lengths).cuda()
 	max_len = torch.max(lengths).item()
 	ids = torch.arange(0, max_len, out=torch.cuda.LongTensor(max_len))
 	mask = (ids < lengths.unsqueeze(1)).byte()

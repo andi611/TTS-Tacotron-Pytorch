@@ -172,7 +172,7 @@ def collate_fn(batch):
 	gate_batch = torch.FloatTensor(len(batch), max_target_len).zero_()
 	for i, x in enumerate(batch): 
 		gate_batch[i, len(x[1])-1:] = 1
-		output_lengths[i] = len(x[1])
+		output_lengths[i] = mel_batch[i].size(1)
 
 	x_batch, mel_batch, y_batch, gate_batch, output_lengths = Variable(x_batch[indices]), Variable(mel_batch[indices]), Variable(y_batch[indices]), Variable(gate_batch[indices]), output_lengths[indices]
 	return x_batch, mel_batch, y_batch, gate_batch, sorted_lengths, output_lengths

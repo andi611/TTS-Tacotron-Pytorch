@@ -143,28 +143,35 @@ def collate_fn(batch):
 
 	def _pad_2d(x, max_len):
 		return np.pad(x, [(0, max_len - len(x)), (0, 0)], mode="constant", constant_values=0)
-		
+	
 	r = config.outputs_per_step
 	input_lengths = [len(x[0]) for x in batch]
-	max_input_len = np.max(input_lengths)
 	
+	max_input_len = np.max(input_lengths)
 	max_target_len = np.max([len(x[1]) for x in batch]) + 1 # Add single zeros frame at least, so plus 1
+	
 	if max_target_len % r != 0:
 		max_target_len += r - max_target_len % r
 		assert max_target_len % r == 0
 
-	a = np.array([_pad(x[0], max_input_len) for x in batch], dtype=np.int)
-	x_batch = torch.LongTensor(a)
-
 	input_lengths = torch.LongTensor(input_lengths)
+	sorted_lengths, indices = torch.sort(input_lengths.view(-1), dim=0, descending=True)
+	sorted_lengths = sorted_lengths.long().numpy()
 
-	b = np.array([_pad_2d(x[1], max_target_len) for x in batch], dtype=np.float32)
-	mel_batch = torch.FloatTensor(b)
+	x_batch = np.array([_pad(x[0], max_input_len) for x in batch], dtype=np.int)
+	x_batch = torch.LongTensor(x_batch)
 
-	c = np.array([_pad_2d(x[2], max_target_len) for x in batch], dtype=np.float32)
-	y_batch = torch.FloatTensor(c)
+	mel_batch = np.array([_pad_2d(x[1], max_target_len) for x in batch], dtype=np.float32)
+	mel_batch = torch.FloatTensor(mel_batch)
+
+	y_batch = np.array([_pad_2d(x[2], max_target_len) for x in batch], dtype=np.float32)
+	y_batch = torch.FloatTensor(y_batch)
 	
-	return x_batch, input_lengths, mel_batch, y_batch
+	gate_batch = torch.FloatTensor(len(batch), max_target_len).zero_()
+	for i, x in enumerate(batch): gate_batch[i, len(x[1])-1:] = 1
+
+	x_batch, mel_batch, y_batch, gate_batch = Variable(x_batch[indices]), Variable(mel_batch[indices]), Variable(y_batch[indices]), Variable(gate_batch[indices])
+	return x_batch, mel_batch, y_batch, gate_batch, sorted_lengths
 
 
 #######################
@@ -180,12 +187,10 @@ def _learning_rate_decay(init_lr, global_step):
 ###############
 # SAVE STATES #
 ###############
-def save_states(global_step, mel_outputs, linear_outputs, attn, y,
-				input_lengths, checkpoint_dir=None):
+def save_states(global_step, mel_outputs, linear_outputs, attn, y, checkpoint_dir=None):
 
 	
-	idx = min(1, len(input_lengths) - 1) # idx = np.random.randint(0, len(input_lengths))
-	input_length = input_lengths[idx]
+	idx = 1 # idx = np.random.randint(0, len(mel_outputs))
 
 	# Alignment
 	path = os.path.join(checkpoint_dir, "step{}_alignment.png".format(
@@ -230,36 +235,29 @@ def save_checkpoint(model, optimizer, step, checkpoint_dir, epoch):
 """
 	One step of training: Train a single batch of data on Tacotron
 """
-def tacotron_step(model, optimizer, criterion,
-				  x, input_lengths, mel, y,
-				  init_lr, sample_rate, clip_thresh,
-				  running_loss, data_len, global_step):
+def tacotron_step(model, optimizer, criterions,
+				  x, mel, y, gate, sorted_lengths, 
+				  init_lr, sample_rate, clip_thresh, global_step):
 	
 	#---decay learning rate---#
 	current_lr = _learning_rate_decay(init_lr, global_step)
 	for param_group in optimizer.param_groups:
 		param_group['lr'] = current_lr
 
-	#---sort by length---#
-	sorted_lengths, indices = torch.sort(input_lengths.view(-1), dim=0, descending=True)
-	sorted_lengths = sorted_lengths.long().numpy()
-
 	#---feed data---#
-	x, mel, y = Variable(x[indices]), Variable(mel[indices]), Variable(y[indices])
 	if USE_CUDA:
-		x, mel, y = x.cuda(), mel.cuda(), y.cuda()
-	mel_outputs, linear_outputs, attn = model(x, mel, input_lengths=sorted_lengths)
+		x, mel, y, gate, = x.cuda(), mel.cuda(), y.cuda(), gate.cuda()
+	mel_outputs, linear_outputs, attn, gate_outputs = model(x, mel, input_lengths=sorted_lengths)
 
 	#---Loss---#
-	mel_loss = criterion(mel_outputs, mel)
+	mel_loss = criterions[0](mel_outputs, mel)
 	n_priority_freq = int(3000 / (sample_rate * 0.5) * model.linear_dim)
-	linear_loss = 0.5 * criterion(linear_outputs, y) + 0.5 * criterion(linear_outputs[:, :, :n_priority_freq], y[:, :, :n_priority_freq])
-	loss = mel_loss + linear_loss
+	linear_loss = 0.5 * criterion[0](linear_outputs, y) + 0.5 * criterion[0](linear_outputs[:, :, :n_priority_freq], y[:, :, :n_priority_freq])
+	gate_loss = criterions[1](gate_outputs, gate)
+	loss = mel_loss + linear_loss + gate_loss
 	
 	#---log loss---#
 	total_L = loss.item()
-	running_loss += loss.item()
-	avg_L = running_loss / (data_len)
 	mel_L = mel_loss.item()
 	linear_L = linear_loss.item()
 
@@ -277,7 +275,6 @@ def tacotron_step(model, optimizer, criterion,
 		   'grad_norm' : grad_norm,
 		   'current_lr' : current_lr }
 	Ls = { 'total_L': total_L,
-		   'avg_L' : avg_L,
 		   'mel_L' : mel_L,
 		   'linear_L' : linear_L }
 
@@ -304,23 +301,21 @@ def train(model,
 		model = model.cuda()
 	
 	model.train()
+	criterions = (nn.L1Loss(), nn.BCEWithLogitsLoss())
+	
 	writer = SummaryWriter() if summary_comment == None else SummaryWriter(summary_comment)
 
 	global global_step, global_epoch
-	criterion = nn.L1Loss()
-
 
 	while global_epoch < max_epochs and global_step < max_steps:
 		
 		start = time.time()
-		running_loss = 0.
 		
-		for x, input_lengths, mel, y in data_loader:
+		for x, mel, y, gate, sorted_lengths in data_loader:
 			
-			model, optimizer, Ms, Rs = tacotron_step(model, optimizer, criterion,
-												 x, input_lengths, mel, y,
-												 init_lr, sample_rate, clip_thresh,
-												 running_loss, len(data_loader), global_step)
+			model, optimizer, Ms, Rs = tacotron_step(model, optimizer, criterions,
+												 	x, mel, y, gate, sorted_lengths,
+												 	init_lr, sample_rate, clip_thresh, global_step)
 
 			mel_outputs = Ms['mel_outputs']
 			linear_outputs = Ms['linear_outputs']
@@ -336,12 +331,12 @@ def train(model,
 
 			duration = time.time() - start
 			if global_step > 0 and global_step % checkpoint_interval == 0:
-				save_states(global_step, mel_outputs, linear_outputs, attn, y, sorted_lengths, checkpoint_dir)
+				save_states(global_step, mel_outputs, linear_outputs, attn, y, checkpoint_dir)
 				save_checkpoint(model, optimizer, global_step, checkpoint_dir, global_epoch)
-				log = '[{}] total_L: {:.3f}, avg_L: {:.3f}, mel_L: {:.3f}, mag_L: {:.3f}, grad_norm: {:.3f}, lr: {:.5f}, t: {:.2f}s, saved: T'.format(global_step, total_L, avg_L, mel_L, linear_L, grad_norm, current_lr, duration)
+				log = '[{}] total_L: {:.3f}, mel_L: {:.3f}, linear_L: {:.3f}, grad_norm: {:.3f}, lr: {:.5f}, t: {:.2f}s, saved: T'.format(global_step, total_L, mel_L, linear_L, grad_norm, current_lr, duration)
 				print(log)
 			elif global_step % 5 == 0:
-				log = '[{}] total_L: {:.3f}, avg_L: {:.3f}, mel_L: {:.3f}, mag_L: {:.3f}, grad_norm: {:.3f}, lr: {:.5f}, t: {:.2f}s, saved: F'.format(global_step, total_L, avg_L, mel_L, linear_L, grad_norm, current_lr, duration)
+				log = '[{}] total_L: {:.3f}, mel_L: {:.3f}, linear_L: {:.3f}, grad_norm: {:.3f}, lr: {:.5f}, t: {:.2f}s, saved: F'.format(global_step, total_L, mel_L, linear_L, grad_norm, current_lr, duration)
 				print(log, end='\r')
 
 			# Logs

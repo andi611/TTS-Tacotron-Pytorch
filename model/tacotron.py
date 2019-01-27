@@ -192,6 +192,7 @@ class Decoder(nn.Module):
 		self.decoder_rnns = nn.ModuleList([nn.GRUCell(256, 256) for _ in range(2)])
 
 		self.proj_to_mel = nn.Linear(256, in_dim * r)
+		self.proj_to_gate = nn.sigmoid(nn.Linear(256, 1))
 		self.max_decoder_steps = 200
 
 	"""
@@ -237,9 +238,11 @@ class Decoder(nn.Module):
 
 		outputs = []
 		alignments = []
+		gates = []
 
 		t = 0
 		current_input = initial_input
+		
 		while True:
 			if t > 0:
 				current_input = outputs[-1] if greedy else inputs[t - 1]
@@ -261,28 +264,37 @@ class Decoder(nn.Module):
 
 			output = decoder_input
 			output = self.proj_to_mel(output)
+			gate = self.proj_to_gate(output)
 
 			outputs += [output]
 			alignments += [alignment]
+			gates += [gate]
 
 			t += 1
 
+			# testing 
 			if greedy:
 				if t > 1 and is_end_of_frames(output):
+					break
+				elif gate > 0.5:
+					print("Gated!")
 					break
 				elif t > self.max_decoder_steps:
 					# print("Warning! doesn't seems to be converged")
 					break
+			# training
 			else:
 				if t >= T_decoder:
 					break
 
 		assert greedy or len(outputs) == T_decoder
 		
-		alignments = torch.stack(alignments).transpose(0, 1) # Back to batch first
+		# Back to batch first: (T_out, B) -> (B, T_out)
+		alignments = torch.stack(alignments).transpose(0, 1)
 		outputs = torch.stack(outputs).transpose(0, 1).contiguous()
+		gates = torch.stack(gates).transpose(0, 1).contiguous()
 
-		return outputs, alignments
+		return outputs, alignments, gates
 
 
 def is_end_of_frames(output, eps=0.2):
@@ -322,7 +334,7 @@ class Tacotron(nn.Module):
 		else:
 			memory_lengths = None
 		
-		mel_outputs, alignments = self.decoder(encoder_outputs, targets, memory_lengths=memory_lengths) # (B, T', mel_dim*r)
+		mel_outputs, alignments, gate_outputs = self.decoder(encoder_outputs, targets, memory_lengths=memory_lengths) # (B, T', mel_dim*r)
 
 		# Post net processing below
 
@@ -331,4 +343,4 @@ class Tacotron(nn.Module):
 		linear_outputs = self.postnet(mel_outputs)
 		linear_outputs = self.last_linear(linear_outputs)
 
-		return mel_outputs, linear_outputs, alignments
+		return mel_outputs, linear_outputs, alignments, gate_outputs

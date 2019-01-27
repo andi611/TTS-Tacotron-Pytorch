@@ -22,7 +22,7 @@ class TacotronLoss(nn.Module):
 		super(TacotronLoss, self).__init__()
 		self.sample_rate = sample_rate
 		self.linear_dim = linear_dim
-		self.criterion = nn.L1Loss()
+		self.criterion = nn.MSELoss()
 		self.criterion_gate = nn.BCEWithLogitsLoss()
 
 	def forward(self, model_output, targets):

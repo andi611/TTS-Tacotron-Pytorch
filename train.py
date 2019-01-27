@@ -250,7 +250,7 @@ def tacotron_step(model, optimizer, criterion,
 		x, mel, y, gate, = x.cuda(), mel.cuda(), y.cuda(), gate.cuda()
 	mel_outputs, linear_outputs, gate_outputs, attn = model(x, mel, input_lengths=sorted_lengths)
 
-	losses = criterion([mel_outputs, linear_outputs, gate_outputs], [mel, linear, gate])
+	losses = criterion([mel_outputs, linear_outputs, gate_outputs], [mel, y, gate])
 	
 	#---log loss---#
 	loss, total_L = losses[0], losses[0].item()

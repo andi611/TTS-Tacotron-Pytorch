@@ -1,6 +1,14 @@
 # Tacotron
 A Pytorch implementation of Google's Tacotron speech synthesis with pre-trained model (unofficial)
 
+## Introduction
+This work is based on [r9y9/tacotron_pytorch](https://github.com/r9y9/tacotron_pytorch), the main differences are:
+* Adds **location-sensitive attention** and the **stop token** from the [Tacotron 2](https://arxiv.org/pdf/1712.05884.pdf) paper. 
+* Remove all TensorFlow dependencies that [r9y9](https://github.com/r9y9/)'s work uses, now it runs on PyTorch fully.
+* Rewrite loss function and uses MLE loss instead of L1 loss.
+* Merge the LJ Speech data preprocessing script from [keithito](https://github.com/keithito/tacotron).
+* Code Factoring and optimization.
+
 ## Quick Start
 
 ### Installing dependencies

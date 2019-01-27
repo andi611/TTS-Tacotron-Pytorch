@@ -1,7 +1,7 @@
 # Tacotron
-A Pytorch implementation of Google's Tacotron speech synthesis network with pre-trained model.
+A Pytorch implementation of [Google's Tacotron](https://arxiv.org/pdf/1703.10135.pdf) speech synthesis network, with pre-trained model.
 
-<img src="https://i.imgur.com/zHp0fNS.png" width="1044" height="577">
+<img src="https://i.imgur.com/zHp0fNS.png" width="1044" height="537">
 
 ## Introduction
 This work is based on [r9y9/tacotron_pytorch](https://github.com/r9y9/tacotron_pytorch), the main differences are:

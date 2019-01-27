@@ -342,6 +342,7 @@ class Tacotron(nn.Module):
 		# Post net processing below
 
 		mel_outputs = mel_outputs.view(B, -1, self.mel_dim) # Reshape: (B, T, mel_dim)
+		gate_outputs = gate_outputs.view(B, -1) # Reshape: (B, T)
 
 		linear_outputs = self.postnet(mel_outputs)
 		linear_outputs = self.last_linear(linear_outputs)

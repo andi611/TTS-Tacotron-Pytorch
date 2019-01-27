@@ -1,13 +1,18 @@
 # Tacotron
-A Pytorch implementation of Google's Tacotron speech synthesis with pre-trained model (unofficial)
+A Pytorch implementation of Google's Tacotron speech synthesis network with pre-trained model.
+
+<img src="https://i.imgur.com/zHp0fNS.png" width="1044" height="577">
 
 ## Introduction
 This work is based on [r9y9/tacotron_pytorch](https://github.com/r9y9/tacotron_pytorch), the main differences are:
 * Adds **location-sensitive attention** and the **stop token** from the [Tacotron 2](https://arxiv.org/pdf/1712.05884.pdf) paper. 
 * Remove all TensorFlow dependencies that [r9y9](https://github.com/r9y9/)'s work uses, now it runs on PyTorch fully.
-* Rewrite loss function and uses MLE loss instead of L1 loss.
-* Merge the LJ Speech data preprocessing script from [keithito](https://github.com/keithito/tacotron).
+* Rewrite the loss module, and use MSE loss instead of L1 loss.
+* Incorporate the LJ Speech data preprocessing script from [keithito](https://github.com/keithito/tacotron).
 * Code Factoring and optimization.
+
+Audio quality isn't as good as Google's demo yet, but hopefully it will improve eventually. Pull requests are welcome!
+
 
 ## Quick Start
 
@@ -93,6 +98,3 @@ This work is based on [r9y9/tacotron_pytorch](https://github.com/r9y9/tacotron_p
 ## Acknowledgement
 Credits to Ryuichi Yamamoto for a wonderful Pytorch implementation of [Tacotron](https://github.com/r9y9/tacotron_pytorch), which this work is  mainly based on.
 
-## Alignment
-We show the alignment plot of our model’s testing phase, where the first shows the alignment of monolingual Chinese input, the second is Chinese-English code-switching input, and the third is monolingual English input, respectively.
-<img src="https://i.imgur.com/OSgJvvf.png" width="645" height="775">

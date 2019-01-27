@@ -192,7 +192,9 @@ class Decoder(nn.Module):
 		self.decoder_rnns = nn.ModuleList([nn.GRUCell(256, 256) for _ in range(2)])
 
 		self.proj_to_mel = nn.Linear(256, in_dim * r)
-		self.proj_to_gate = nn.Sigmoid()(nn.Linear(256, 1))
+		self.proj_to_gate = nn.Linear(256, 1)
+		self.sigmoid = nn.Sigmoid()
+
 		self.max_decoder_steps = 200
 
 	"""
@@ -264,7 +266,7 @@ class Decoder(nn.Module):
 
 			output = decoder_input
 			output = self.proj_to_mel(output)
-			gate = self.proj_to_gate(output)
+			gate = self.sigmoid(self.proj_to_gate(output))
 
 			outputs += [output]
 			alignments += [alignment]
@@ -274,13 +276,14 @@ class Decoder(nn.Module):
 
 			# testing 
 			if greedy:
-				if t > 1 and is_end_of_frames(output):
+				if gate > 0.5:
+					print('Terminated by gate!')
 					break
-				elif gate > 0.5:
-					print("Gated!")
+				elif t > 1 and is_end_of_frames(output):
+					# print('Terminated by silent frames!')
 					break
 				elif t > self.max_decoder_steps:
-					# print("Warning! doesn't seems to be converged")
+					# print('Warning! doesn't seems to be converged')
 					break
 			# training
 			else:

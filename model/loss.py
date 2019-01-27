@@ -1,5 +1,21 @@
+# -*- coding: utf-8 -*- #
+"""*********************************************************************************************"""
+#   FileName     [ loss.py ]
+#   Synopsis     [ Loss for the Tacotron model ]
+#   Author       [ Ting-Wei Liu (Andi611) ]
+#   Copyright    [ Copyleft(c), Speech Lab, NTU, Taiwan ]
+"""*********************************************************************************************"""
+
+
+###############
+# IMPORTATION #
+###############
 from torch import nn
 
+
+#################
+# TACOTRON LOSS #
+#################
 class TacotronLoss(nn.Module):
 	def __init__(self, sample_rate, linear_dim):
 		super(TacotronLoss, self).__init__()
@@ -21,3 +37,30 @@ class TacotronLoss(nn.Module):
 		loss = mel_loss + linear_loss + gate_loss
 		losses = [loss, mel_loss, linear_loss, gate_loss]
 		return losses
+
+
+#########################
+# GET MASK FROM LENGTHS #
+#########################
+def get_gate_mask_from_lengths(lengths):
+	max_len = torch.max(lengths).item()
+	ids = torch.arange(0, max_len, out=torch.cuda.LongTensor(max_len))
+	mask = (ids < lengths.unsqueeze(1)).byte()
+	return ~mask
+
+
+#########################
+# GET MASK FROM LENGTHS #
+#########################
+"""
+	Get mask tensor from list of length
+
+	Args:
+		memory: (batch, max_time, dim)
+		memory_lengths: array like
+"""
+def get_rnn_mask_from_lengths(memory, memory_lengths):
+	mask = memory.data.new(memory.size(0), memory.size(1)).byte().zero_()
+	for idx, l in enumerate(memory_lengths):
+		mask[idx][:l] = 1
+	return ~mask

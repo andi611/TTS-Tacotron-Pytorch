@@ -14,7 +14,7 @@ import torch
 from torch import nn
 from torch.autograd import Variable
 from model.attention import BahdanauAttention, AttentionWrapper
-from model.attention import get_mask_from_lengths
+from model.loss import get_rnn_mask_from_lengths, get_gate_mask_from_lengths
 
 
 ##########
@@ -214,8 +214,8 @@ class Decoder(nn.Module):
 
 		processed_memory = self.memory_layer(encoder_outputs)
 		if memory_lengths is not None:
-			mask = get_mask_from_lengths(processed_memory, memory_lengths)
-			mask_gate = ~get_mask_from_lengths(memory_lengths)
+			mask = get_rnn_mask_from_lengths(processed_memory, memory_lengths)
+			mask_gate = get_gate_mask_from_lengths(memory_lengths)
 		else:
 			mask = None
 

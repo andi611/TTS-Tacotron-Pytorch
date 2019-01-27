@@ -265,7 +265,7 @@ class Decoder(nn.Module):
 				decoder_input = decoder_rnn_hiddens[idx] + decoder_input # Residual connectinon
 
 			output = decoder_input
-			gate = self.sigmoid(self.proj_to_gate(output))
+			gate = self.sigmoid(self.proj_to_gate(output)).squeeze()
 			output = self.proj_to_mel(output)
 
 			outputs += [output]
@@ -295,7 +295,7 @@ class Decoder(nn.Module):
 		# Back to batch first: (T_out, B) -> (B, T_out)
 		alignments = torch.stack(alignments).transpose(0, 1)
 		outputs = torch.stack(outputs).transpose(0, 1).contiguous()
-		gates = torch.stack(gates.squeeze()).transpose(0, 1).contiguous()
+		gates = torch.stack(gates).transpose(0, 1).contiguous()
 
 		return outputs, alignments, gates
 

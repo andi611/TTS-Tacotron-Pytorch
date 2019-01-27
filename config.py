@@ -61,6 +61,7 @@ class configurations(object):
 
 	def get_testing_config(self):
 		self.max_iters = 200
+		self.max_decoder_steps = 500
 		self.griffin_lim_iters = 60
 		self.power = 1.5 # Power to raise magnitudes to prior to Griffin-Lim
 

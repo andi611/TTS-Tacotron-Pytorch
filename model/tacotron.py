@@ -195,7 +195,7 @@ class Decoder(nn.Module):
 		self.proj_to_gate = nn.Linear(256, 1 * self.r)
 		self.sigmoid = nn.Sigmoid()
 
-		self.max_decoder_steps = 200
+		self.max_decoder_steps = 800
 
 	"""
 		Decoder forward step.
@@ -280,10 +280,10 @@ class Decoder(nn.Module):
 					print('Terminated by gate!')
 					break
 				elif t > 1 and is_end_of_frames(output):
-					# print('Terminated by silent frames!')
+					print('Terminated by silent frames!')
 					break
 				elif t > self.max_decoder_steps:
-					# print('Warning! doesn't seems to be converged')
+					print('Warning! doesn\'t seems to be converged')
 					break
 			# training
 			else:

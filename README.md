@@ -20,12 +20,11 @@ A Pytorch implementation of Google's Tacotron speech synthesis with pre-trained 
 ### Using a pre-trained model
 * **Run the testing environment with interactive mode**:
 	```
-	python3 test.py --interactive --plot --long_input --model 470000
+	python3 test.py --interactive --plot --model 470000
 	```
 * **Run the testing algorithm on a set of transcripts** (Results can be found in the [result/480000](result/480000) directory) :
 	```
 	python3 test.py --plot --model 480000 --test_file_path ../data/text/test_sample.txt
-	* '--long_input' is optional to add
 	```
 
 

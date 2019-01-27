@@ -296,7 +296,7 @@ class Decoder(nn.Module):
 		alignments = torch.stack(alignments).transpose(0, 1)
 		outputs = torch.stack(outputs).transpose(0, 1).contiguous()
 		gates = torch.stack(gates).transpose(0, 1).contiguous()
-        gates.data.masked_fill_(mask[:, :], 1e3) # gate energies
+		gates.data.masked_fill_(mask[:, :], 1e3) # gate energies
 
 		return outputs, alignments, gates
 

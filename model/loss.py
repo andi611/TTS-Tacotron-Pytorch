@@ -43,16 +43,6 @@ class TacotronLoss(nn.Module):
 #########################
 # GET MASK FROM LENGTHS #
 #########################
-def get_gate_mask_from_lengths(lengths):
-	max_len = torch.max(lengths).item()
-	ids = torch.arange(0, max_len, out=torch.cuda.LongTensor(max_len))
-	mask = (ids < lengths.unsqueeze(1)).byte()
-	return ~mask
-
-
-#########################
-# GET MASK FROM LENGTHS #
-#########################
 """
 	Get mask tensor from list of length
 
@@ -64,4 +54,15 @@ def get_rnn_mask_from_lengths(memory, memory_lengths):
 	mask = memory.data.new(memory.size(0), memory.size(1)).byte().zero_()
 	for idx, l in enumerate(memory_lengths):
 		mask[idx][:l] = 1
+	return ~mask
+
+
+#########################
+# GET MASK FROM LENGTHS #
+#########################
+def get_gate_mask_from_lengths(lengths):
+	lengths = torch.LongTensor(lengths)
+	max_len = torch.max(lengths).item()
+	ids = torch.arange(0, max_len, out=torch.cuda.LongTensor(max_len))
+	mask = (ids < lengths.unsqueeze(1)).byte()
 	return ~mask

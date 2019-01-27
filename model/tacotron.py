@@ -14,7 +14,7 @@ import torch
 from torch import nn
 from torch.autograd import Variable
 from model.attention import BahdanauAttention, AttentionWrapper
-from model.loss import get_rnn_mask_from_lengths, get_gate_mask_from_lengths
+from model.loss import get_rnn_mask_from_lengths
 
 
 ##########
@@ -206,9 +206,8 @@ class Decoder(nn.Module):
 			encoder_outputs: Encoder outputs. (B, T_encoder, dim)
 			inputs: Decoder inputs. i.e., mel-spectrogram. If None (at eval-time), decoder outputs are used as decoder inputs.
 			memory_lengths: Encoder output (memory) lengths. If not None, used for attention masking.
-			gate_lengths: Gate output (memory) lengths. If not None, used for gate energy masking.
 	"""
-	def forward(self, encoder_outputs, inputs=None, memory_lengths=None, gate_lengths=None):
+	def forward(self, encoder_outputs, inputs=None, memory_lengths=None):
 		B = encoder_outputs.size(0)
 
 		processed_memory = self.memory_layer(encoder_outputs)
@@ -217,11 +216,6 @@ class Decoder(nn.Module):
 			mask = get_rnn_mask_from_lengths(processed_memory, memory_lengths)
 		else:
 			mask = None
-		
-		if gate_lengths is not None:
-			mask_gate = get_gate_mask_from_lengths(memory_lengths)
-		else:
-			mask_gate = None
 
 		greedy = inputs is None # Run greedy decoding if inputs is None
 
@@ -301,11 +295,6 @@ class Decoder(nn.Module):
 		alignments = torch.stack(alignments).transpose(0, 1)
 		outputs = torch.stack(outputs).transpose(0, 1).contiguous()
 		gates = torch.stack(gates).transpose(0, 1).contiguous()
-		
-		if gate_lengths is not None:
-			print(mask_gate.size())
-			print(gates.size())
-			gates.data.masked_fill_(mask_gate[:, :], 1e3) # gate energies
 
 		return outputs, alignments, gates
 
@@ -335,7 +324,7 @@ class Tacotron(nn.Module):
 		self.postnet = CBHG(mel_dim, K=8, projections=[256, mel_dim])
 		self.last_linear = nn.Linear(mel_dim * 2, linear_dim)
 
-	def forward(self, inputs, targets=None, input_lengths=None, output_lengths=None):
+	def forward(self, inputs, targets=None, input_lengths=None):
 		B = inputs.size(0)
 
 		inputs = self.embedding(inputs)
@@ -344,12 +333,10 @@ class Tacotron(nn.Module):
 
 		if self.use_mask:
 			memory_lengths = input_lengths
-			gate_lengths = output_lengths
 		else:
 			memory_lengths = None
-			gate_lengths = None
 		
-		mel_outputs, alignments, gate_outputs = self.decoder(encoder_outputs, targets, memory_lengths=memory_lengths, gate_lengths=gate_lengths) # (B, T', mel_dim*r)
+		mel_outputs, alignments, gate_outputs = self.decoder(encoder_outputs, targets, memory_lengths=memory_lengths) # (B, T', mel_dim*r)
 
 		# Post net processing below
 

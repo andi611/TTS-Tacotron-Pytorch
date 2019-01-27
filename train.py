@@ -168,14 +168,11 @@ def collate_fn(batch):
 	y_batch = np.array([_pad_2d(x[2], max_target_len) for x in batch], dtype=np.float32)
 	y_batch = torch.FloatTensor(y_batch)
 	
-	output_lengths = torch.LongTensor(len(batch))
 	gate_batch = torch.FloatTensor(len(batch), max_target_len).zero_()
-	for i, x in enumerate(batch): 
-		gate_batch[i, len(x[1])-1:] = 1
-		output_lengths[i] = len(x[1])
+	for i, x in enumerate(batch): gate_batch[i, len(x[1])-1:] = 1
 
-	x_batch, mel_batch, y_batch, gate_batch, output_lengths = Variable(x_batch[indices]), Variable(mel_batch[indices]), Variable(y_batch[indices]), Variable(gate_batch[indices]), output_lengths[indices]
-	return x_batch, mel_batch, y_batch, gate_batch, sorted_lengths, output_lengths
+	x_batch, mel_batch, y_batch, gate_batch, = Variable(x_batch[indices]), Variable(mel_batch[indices]), Variable(y_batch[indices]), Variable(gate_batch[indices])
+	return x_batch, mel_batch, y_batch, gate_batch, sorted_lengths
 
 
 #######################
@@ -240,8 +237,7 @@ def save_checkpoint(model, optimizer, step, checkpoint_dir, epoch):
 	One step of training: Train a single batch of data on Tacotron
 """
 def tacotron_step(model, optimizer, criterion,
-				  x, mel, y, gate, 
-				  sorted_lengths, output_lengths,
+				  x, mel, y, gate, sorted_lengths,
 				  init_lr, clip_thresh, global_step):
 	
 	#---decay learning rate---#
@@ -252,7 +248,7 @@ def tacotron_step(model, optimizer, criterion,
 	#---feed data---#
 	if USE_CUDA:
 		x, mel, y, gate, = x.cuda(), mel.cuda(), y.cuda(), gate.cuda()
-	mel_outputs, linear_outputs, gate_outputs, attn = model(x, mel, input_lengths=sorted_lengths, output_lengths=output_lengths)
+	mel_outputs, linear_outputs, gate_outputs, attn = model(x, mel, input_lengths=sorted_lengths)
 
 	losses = criterion([mel_outputs, linear_outputs, gate_outputs], [mel, linear, gate])
 	
@@ -312,11 +308,10 @@ def train(model,
 		
 		start = time.time()
 		
-		for x, mel, y, gate, sorted_lengths, output_lengths in data_loader:
+		for x, mel, y, gate, sorted_lengths in data_loader:
 			
 			model, optimizer, Ms, Rs = tacotron_step(model, optimizer, criterion,
-												 	x, mel, y, gate, 
-												 	sorted_lengths, output_lengths,
+												 	x, mel, y, gate, sorted_lengths,
 												 	init_lr, clip_thresh, global_step)
 
 			mel_outputs = Ms['mel_outputs']

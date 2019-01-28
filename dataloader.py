@@ -15,7 +15,8 @@ import numpy as np
 #----------------#
 import torch
 from torch.utils import data
-#--------------------------#
+from torch.autograd import Variable
+#---------------------------------#
 from config import config
 from utils.text import text_to_sequence
 #-------------------------------------#

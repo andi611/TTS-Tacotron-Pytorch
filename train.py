@@ -36,7 +36,6 @@ from utils.text import symbols
 import torch
 from torch import nn
 from torch import optim
-from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
 #----------------------------------------#
 from model.tacotron import Tacotron

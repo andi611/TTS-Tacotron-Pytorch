@@ -239,7 +239,7 @@ def train(model,
 """
 def initialize_training(checkpoint_path, data_root, meta_text):
 	
-	dataloader = Dataloader()
+	dataloader = Dataloader(data_root, meta_text)
 
 	model = Tacotron(n_vocab=len(symbols),
 					 embedding_dim=config.embedding_dim,

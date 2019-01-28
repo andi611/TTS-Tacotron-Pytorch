@@ -144,7 +144,7 @@ def collate_fn(batch):
 """
 	Create dataloader
 """
-def Dataloader():
+def Dataloader(data_root, meta_text):
 	
 	# Input dataset definitions
 	X = FileSourceDataset(TextDataSource(data_root, meta_text))

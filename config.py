@@ -43,6 +43,11 @@ class configurations(object):
 		self.padding_idx = None
 		self.use_mask = False
 
+	def get_loss_config(self):
+		self.prior_freq = 3000
+		self.prior_weight = 0.5
+		self.gate_coefficient = 0.1
+
 	def get_dataloader_config(self):
 		self.pin_memory = True
 		self.num_workers = cpu_count() # or just set 2

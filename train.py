@@ -26,26 +26,24 @@
 import os
 import sys
 import time
-#-----------------------#
+#----------------#
 import numpy as np
-import librosa.display
 #---------------------#
 from utils import audio
 from utils.plot import plot_alignment, plot_spectrogram
-from utils.text import text_to_sequence, symbols
+from utils.text import symbols
 #----------------------------------------------#
 import torch
 from torch import nn
 from torch import optim
 from torch.autograd import Variable
 import torch.backends.cudnn as cudnn
-from torch.utils import data
 #----------------------------------------#
 from model.tacotron import Tacotron
 from model.loss import TacotronLoss
 from config import config, get_training_args
+from dataloader import Dataloader
 #------------------------------------------#
-from nnmnkwii.datasets import FileSourceDataset, FileDataSource
 from tensorboardX import SummaryWriter
 
 
@@ -57,122 +55,6 @@ global_epoch = 0
 USE_CUDA = torch.cuda.is_available()
 if USE_CUDA:
 	cudnn.benchmark = False
-
-
-####################
-# TEXT DATA SOURCE #
-####################
-class TextDataSource(FileDataSource):
-	def __init__(self, data_root, meta_text):
-		self.data_root = data_root
-		self.meta_text = meta_text
-		#self._cleaner_names = [x.strip() for x in hparams.cleaners.split(',')]
-
-	def collect_files(self):
-		meta = os.path.join(self.data_root, self.meta_text)
-		with open(meta, 'r', encoding='utf-8') as f:
-			lines = f.readlines()
-		lines = list(map(lambda l: l.split("|")[-1][:-1], lines))
-		return lines
-
-	def collect_features(self, text):
-		return np.asarray(text_to_sequence(text), dtype=np.int32)
-
-
-###################
-# NPY DATA SOURCE #
-###################
-class _NPYDataSource(FileDataSource):
-	def __init__(self, col, data_root, meta_text):
-		self.col = col
-		self.data_root = data_root
-		self.meta_text = meta_text
-
-	def collect_files(self):
-		meta = os.path.join(self.data_root, self.meta_text)
-		with open(meta, 'r', encoding='utf-8') as f:
-			lines = f.readlines()
-		lines = list(map(lambda l: l.split("|")[self.col], lines))
-		paths = list(map(lambda f: os.path.join(self.data_root, f), lines))
-		return paths
-
-	def collect_features(self, path):
-		return np.load(path)
-
-
-########################
-# MEL SPEC DATA SOURCE #
-########################
-class MelSpecDataSource(_NPYDataSource):
-	def __init__(self, data_root, meta_text):
-		super(MelSpecDataSource, self).__init__(1, data_root, meta_text)
-
-
-###########################
-# LINEAR SPEC DATA SOURCE #
-###########################
-class LinearSpecDataSource(_NPYDataSource):
-	def __init__(self, data_root, meta_text):
-		super(LinearSpecDataSource, self).__init__(0, data_root, meta_text)
-
-
-#######################
-# PYTORCH DATA SOURCE #
-#######################
-class PyTorchDatasetWrapper(object):
-	def __init__(self, X, Mel, Y):
-		self.X = X
-		self.Mel = Mel
-		self.Y = Y
-
-	def __getitem__(self, idx):
-		return self.X[idx], self.Mel[idx], self.Y[idx]
-
-	def __len__(self):
-		return len(self.X)
-
-
-##############
-# COLLATE FN #
-##############
-"""
-	Create batch
-"""
-def collate_fn(batch):
-	def _pad(seq, max_len):
-		return np.pad(seq, (0, max_len - len(seq)), mode='constant', constant_values=0)
-
-	def _pad_2d(x, max_len):
-		return np.pad(x, [(0, max_len - len(x)), (0, 0)], mode="constant", constant_values=0)
-	
-	r = config.outputs_per_step
-	input_lengths = [len(x[0]) for x in batch]
-	
-	max_input_len = np.max(input_lengths)
-	max_target_len = np.max([len(x[1]) for x in batch]) + 1 # Add single zeros frame at least, so plus 1
-	
-	if max_target_len % r != 0:
-		max_target_len += r - max_target_len % r
-		assert max_target_len % r == 0
-
-	input_lengths = torch.LongTensor(input_lengths)
-	sorted_lengths, indices = torch.sort(input_lengths.view(-1), dim=0, descending=True)
-	sorted_lengths = sorted_lengths.long().numpy()
-
-	x_batch = np.array([_pad(x[0], max_input_len) for x in batch], dtype=np.int)
-	x_batch = torch.LongTensor(x_batch)
-
-	mel_batch = np.array([_pad_2d(x[1], max_target_len) for x in batch], dtype=np.float32)
-	mel_batch = torch.FloatTensor(mel_batch)
-
-	y_batch = np.array([_pad_2d(x[2], max_target_len) for x in batch], dtype=np.float32)
-	y_batch = torch.FloatTensor(y_batch)
-	
-	gate_batch = torch.FloatTensor(len(batch), max_target_len).zero_()
-	for i, x in enumerate(batch): gate_batch[i, len(x[1])-1:] = 1
-
-	x_batch, mel_batch, y_batch, gate_batch, = Variable(x_batch[indices]), Variable(mel_batch[indices]), Variable(y_batch[indices]), Variable(gate_batch[indices])
-	return x_batch, mel_batch, y_batch, gate_batch, sorted_lengths
 
 
 #######################
@@ -284,21 +166,20 @@ def tacotron_step(model, optimizer, criterion,
 #########
 def train(model, 
 		  optimizer,
-		  data_loader, 
+		  dataloader, 
 		  summary_comment,
 		  init_lr=0.002,
 		  checkpoint_dir=None, 
 		  checkpoint_interval=None, 
 		  max_epochs=None,
 		  max_steps=None,
-		  clip_thresh=1.0,
-		  sample_rate=20000):
+		  clip_thresh=1.0):
 
 	if USE_CUDA: 
 		model = model.cuda()
 	
 	model.train()
-	criterion = TacotronLoss(sample_rate, model.linear_dim)
+	criterion = TacotronLoss()
 	
 	writer = SummaryWriter() if summary_comment == None else SummaryWriter(summary_comment)
 
@@ -308,7 +189,7 @@ def train(model,
 		
 		start = time.time()
 		
-		for x, mel, y, gate, sorted_lengths in data_loader:
+		for x, mel, y, gate, sorted_lengths in dataloader:
 			
 			model, optimizer, Ms, Rs = tacotron_step(model, optimizer, criterion,
 												 	x, mel, y, gate, sorted_lengths,
@@ -330,10 +211,10 @@ def train(model,
 			if global_step > 0 and global_step % checkpoint_interval == 0:
 				save_states(global_step, mel_outputs, linear_outputs, attn, y, checkpoint_dir)
 				save_checkpoint(model, optimizer, global_step, checkpoint_dir, global_epoch)
-				log = '[{}] total_L: {:.3f}, mel_L: {:.3f}, linear_L: {:.3f}, gate_L: {:.3f}, grad_norm: {:.3f}, lr: {:.5f}, t: {:.2f}s, saved: T'.format(global_step, total_L, mel_L, linear_L, gate_L, grad_norm, current_lr, duration)
+				log = '[{}] total_L: {:.3f}, mel_L: {:.3f}, lin_L: {:.3f}, gate_L: {:.3f}, grad: {:.3f}, lr: {:.5f}, t: {:.2f}s, saved: T'.format(global_step, total_L, mel_L, linear_L, gate_L, grad_norm, current_lr, duration)
 				print(log)
 			elif global_step % 5 == 0:
-				log = '[{}] total_L: {:.3f}, mel_L: {:.3f}, linear_L: {:.3f}, gate_L: {:.3f}, grad_norm: {:.3f}, lr: {:.5f}, t: {:.2f}s, saved: F'.format(global_step, total_L, mel_L, linear_L, gate_L, grad_norm, current_lr, duration)
+				log = '[{}] total_L: {:.3f}, mel_L: {:.3f}, lin_L: {:.3f}, gate_L: {:.3f}, grad: {:.3f}, lr: {:.5f}, t: {:.2f}s, saved: F'.format(global_step, total_L, mel_L, linear_L, gate_L, grad_norm, current_lr, duration)
 				print(log, end='\r')
 
 			# Logs
@@ -358,21 +239,8 @@ def train(model,
 """
 def initialize_training(checkpoint_path, data_root, meta_text):
 	
-	# Input dataset definitions
-	X = FileSourceDataset(TextDataSource(data_root, meta_text))
-	Mel = FileSourceDataset(MelSpecDataSource(data_root, meta_text))
-	Y = FileSourceDataset(LinearSpecDataSource(data_root, meta_text))
+	dataloader = Dataloader()
 
-	# Dataset and Dataloader setup
-	dataset = PyTorchDatasetWrapper(X, Mel, Y)
-	data_loader = data.DataLoader(dataset, 
-								  batch_size=config.batch_size,
-								  num_workers=config.num_workers, 
-								  shuffle=True,
-								  collate_fn=collate_fn, 
-								  pin_memory=config.pin_memory)
-
-	# Model
 	model = Tacotron(n_vocab=len(symbols),
 					 embedding_dim=config.embedding_dim,
 					 mel_dim=config.num_mels,
@@ -399,7 +267,7 @@ def initialize_training(checkpoint_path, data_root, meta_text):
 			print('Warning: global step and global epoch unable to restore!')
 			sys.exit(0)
 			
-	return model, optimizer, data_loader
+	return model, optimizer, dataloader
 
 
 ########
@@ -411,18 +279,17 @@ def main():
 
 	os.makedirs(args.checkpoint_dir, exist_ok=True)
 
-	model, optimizer, data_loader = initialize_training(args.checkpoint_path, args.data_root, args.meta_text)
+	model, optimizer, dataloader = initialize_training(args.checkpoint_path, args.data_root, args.meta_text)
 
 	# Train!
 	try:
-		train(model, optimizer, data_loader, args.summary_comment,
+		train(model, optimizer, dataloader, args.summary_comment,
 			  init_lr=config.initial_learning_rate,
 			  checkpoint_dir=args.checkpoint_dir,
 			  checkpoint_interval=config.checkpoint_interval,
 			  max_epochs=config.max_epochs,
 			  max_steps=config.max_steps,
-			  clip_thresh=config.clip_thresh,
-			  sample_rate=config.sample_rate)
+			  clip_thresh=config.clip_thresh)
 	except KeyboardInterrupt:
 		print()
 		pass

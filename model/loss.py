@@ -12,16 +12,22 @@
 ###############
 import torch
 from torch import nn
+from config import config
 
 
 #################
 # TACOTRON LOSS #
 #################
 class TacotronLoss(nn.Module):
-	def __init__(self, sample_rate, linear_dim):
+	def __init__(self):
 		super(TacotronLoss, self).__init__()
-		self.sample_rate = sample_rate
-		self.linear_dim = linear_dim
+		
+		self.sample_rate = config.sample_rate
+		self.linear_dim = config.num_freq
+		self.prior_freq = config.prior_freq
+		self.prior_weight = config.prior_weight
+		self.gate_coefficient = config.gate_coefficient
+
 		self.criterion = nn.MSELoss()
 		self.criterion_gate = nn.BCEWithLogitsLoss()
 
@@ -31,11 +37,11 @@ class TacotronLoss(nn.Module):
 		gate_outputs, gate = model_output[2], targets[2]
 
 		mel_loss = self.criterion(mel_outputs, mel)
-		n_priority_freq = int(3000 / (self.sample_rate * 0.5) * self.linear_dim)
-		linear_loss = 0.5 * self.criterion(linear_outputs, linear) + 0.5 * self.criterion(linear_outputs[:, :, :n_priority_freq], linear[:, :, :n_priority_freq])
+		n_priority_freq = int(self.prior_freq / (self.sample_rate * 0.5) * self.linear_dim)
+		linear_loss = (1 - self.prior_weight) * self.criterion(linear_outputs, linear) + self.prior_weight * self.criterion(linear_outputs[:, :, :n_priority_freq], linear[:, :, :n_priority_freq])
 		gate_loss = self.criterion_gate(gate_outputs, gate)
 		
-		loss = mel_loss + linear_loss + gate_loss
+		loss = mel_loss + linear_loss + (self.gate_coefficient * gate_loss)
 		losses = [loss, mel_loss, linear_loss, gate_loss]
 		return losses
 

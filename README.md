@@ -5,11 +5,16 @@ A Pytorch implementation of [Google's Tacotron](https://arxiv.org/pdf/1703.10135
 
 ## Introduction
 This work is based on [r9y9/tacotron_pytorch](https://github.com/r9y9/tacotron_pytorch), the main differences are:
-* Adds **location-sensitive attention** and the **stop token** from the [Tacotron 2](https://arxiv.org/pdf/1712.05884.pdf) paper. 
-* Remove all TensorFlow dependencies that [r9y9](https://github.com/r9y9/)'s work uses, now it runs on PyTorch fully.
-* Rewrite the loss module, and use MSE loss instead of L1 loss.
+* Adds the **stop token** from the [Tacotron 2](https://arxiv.org/pdf/1712.05884.pdf) paper.
+  This can greatly reduce the amount of data required to train a model, and is refer to as `gate` in this implementation.
+* Remove all TensorFlow dependencies that [r9y9](https://github.com/r9y9/) uses, now it runs on PyTorch and PyTorch only.
+* Adds a [loss](model/loss.py) module, and use MSE loss instead of L1 loss.
+* Adds a [data loader](dataloader.py) module.
 * Incorporate the LJ Speech data preprocessing script from [keithito](https://github.com/keithito/tacotron).
-* Code Factoring and optimization.
+* Code factoring and optimization for easier debug and extend in the furture.
+
+The main differences from the original [Tacotron]((https://arxiv.org/pdf/1703.10135.pdf)) paper:
+* TODO
 
 Audio quality isn't as good as Google's demo yet, but hopefully it will improve eventually. Pull requests are welcome!
 
@@ -21,7 +26,7 @@ Audio quality isn't as good as Google's demo yet, but hopefully it will improve 
 1. Install Python 3.
 
 2. Install the latest version of **[Pytorch](https://pytorch.org/get-started/locally/)** according to your platform. For better
-	performance, install with GPU support (CUDA) if viable. This code works with Pytorch 1.0 and later.
+	performance, install with GPU support (CUDA) if viable. This code works with Pytorch 0.4 and later.
 
 3. Install [requirements](requirements.txt):
 	```

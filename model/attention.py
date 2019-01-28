@@ -42,52 +42,6 @@ class BahdanauAttention(nn.Module):
 		return alignment
 
 
-##########################
-# BAHDANAU ATTENTION RNN #
-##########################
-class BahdanauAttentionRNN(nn.Module):
-
-	def __init__(self, 
-				 rnn_cell, 
-				 attention_mechanism,
-				 score_mask_value=-float("inf")):
-
-		super(BahdanauAttentionRNN, self).__init__()
-
-		self.rnn_cell = rnn_cell
-		self.attention_mechanism = attention_mechanism
-		self.memory_layer = nn.Linear(256, 256, bias=False)
-		self.score_mask_value = score_mask_value
-
-	def forward(self,
-				query, 
-				attention, 
-				cell_state, 
-				memory,
-				processed_memory=None, 
-				mask=None, 
-				memory_lengths=None):
-		
-		if processed_memory is None:
-			processed_memory = memory
-		if memory_lengths is not None and mask is None:
-			mask = get_mask_from_lengths(memory, memory_lengths)
-
-		cell_input = torch.cat((query, attention), -1) # Concat input query and previous attention context
-		cell_output = self.rnn_cell(cell_input, cell_state) # Feed it to RNN
-		alignment = self.attention_mechanism(cell_output, processed_memory) # Alignment: (batch, max_time)
-
-		if mask is not None:
-			mask = mask.view(query.size(0), -1)
-			alignment.data.masked_fill_(mask, self.score_mask_value)
-
-		alignment = F.softmax(alignment, dim=1) # Normalize attention weight
-		attention = torch.bmm(alignment.unsqueeze(1), memory) # Attention context vector: (batch, 1, dim)
-		attention = attention.squeeze(1) # (batch, dim)
-
-		return cell_output, attention, alignment
-
-
 ################
 # LINEAR LAYER #
 ################
@@ -210,41 +164,40 @@ class LocationSensitiveAttention(nn.Module):
 		return alignment
 
 
-##########################
-# LOCATION ATTENTION RNN #
-##########################
-class LocationAttentionRNN(nn.Module):
-	
+#################
+# ATTENTION RNN #
+#################
+class AttentionRNN(nn.Module):
+
 	def __init__(self, 
 				 rnn_cell, 
 				 attention_mechanism,
+				 attention,
 				 score_mask_value=-float("inf")):
 
-		super(LocationAttentionRNN, self).__init__()
-		
+		super(AttentionRNN, self).__init__()
+
 		self.rnn_cell = rnn_cell
 		self.attention_mechanism = attention_mechanism
-		self.memory_layer = LinearNorm(256, 256, bias=False, w_init_gain='tanh')
+		self.attention = attention
+		if self.attention == 'Bahdanau':
+			self.memory_layer = nn.Linear(256, 256, bias=False)
+		elif self.attention == 'LocationSensitive':
+			self.memory_layer = LinearNorm(256, 256, bias=False, w_init_gain='tanh')
 		self.score_mask_value = score_mask_value
 
-	"""
-		Args:
-			cell_state: attention rnn last output
-			memory: encoder outputs
-			processed_memory: processed encoder outputs
-			attention_weights_cat: previous and cummulative attention weights
-			mask: binary mask for padded data
-	"""
-	def forward(self, 
-				query,
-				attention,
+	def forward(self,
+				query, 
+				attention, 
 				cell_state, 
-				memory, 
-				attention_weights_cat, 
-				processed_memory=None,
-				mask=None,
+				memory,
+				attention_weights_cat=None,
+				processed_memory=None, 
+				mask=None, 
 				memory_lengths=None):
-
+		
+		if self.attention == 'LocationSensitive' and attention_weights_cat is None:
+			raise RuntimeError('Missing input: attention_weights_cat')
 		if processed_memory is None:
 			processed_memory = memory
 		if memory_lengths is not None and mask is None:
@@ -252,14 +205,19 @@ class LocationAttentionRNN(nn.Module):
 
 		cell_input = torch.cat((query, attention), -1) # Concat input query and previous attention context
 		cell_output = self.rnn_cell(cell_input, cell_state) # Feed it to RNN
-		alignment = self.attention_mechanism(cell_output, processed_memory, attention_weights_cat)
+		
+		if self.attention == 'Bahdanau':
+			alignment = self.attention_mechanism(cell_output, processed_memory) # Alignment: (batch, max_time)
+		elif self.attention == 'LocationSensitive':
+			alignment = self.attention_mechanism(cell_output, processed_memory, attention_weights_cat)
 
 		if mask is not None:
+			mask = mask.view(query.size(0), -1)
 			alignment.data.masked_fill_(mask, self.score_mask_value)
 
-		alignment = F.softmax(alignment, dim=1)
-		attention = torch.bmm(alignment.unsqueeze(1), memory)
-		attention = attention.squeeze(1)
+		alignment = F.softmax(alignment, dim=1) # Normalize attention weight
+		attention = torch.bmm(alignment.unsqueeze(1), memory) # Attention context vector: (batch, 1, dim)
+		attention = attention.squeeze(1) # (batch, dim)
 
 		return cell_output, attention, alignment
 

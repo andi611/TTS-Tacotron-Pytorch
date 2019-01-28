@@ -13,8 +13,8 @@
 import torch
 from torch import nn
 from torch.autograd import Variable
-from model.attention import BahdanauAttention, BahdanauAttentionRNN
-from model.attention import LocationSensitiveAttention, LocationAttentionRNN
+from model.attention import BahdanauAttention, LocationSensitiveAttention
+from model.attention import AttentionRNN
 from model.loss import get_rnn_mask_from_lengths
 
 
@@ -189,9 +189,13 @@ class Decoder(nn.Module):
 		
 		self.attention = attention
 		if self.attention == 'Bahdanau':
-			self.attention_rnn = BahdanauAttentionRNNh(nn.GRUCell(256 + 128, 256), BahdanauAttention(256))
+			self.attention_rnn = AttentionRNNh(nn.GRUCell(256 + 128, 256), 
+											   BahdanauAttention(256), 
+											   attention='Bahdanau')
 		elif self.attention == 'LocationSensitive':
-			self.attention_rnn = LocationAttentionRNN(nn.GRUCell(256 + 128, 256), LocationSensitiveAttention(256))
+			self.attention_rnn = AttentionRNN(nn.GRUCell(256 + 128, 256), 
+											  LocationSensitiveAttention(256),
+											  attention='LocationSensitive')
 		else: raise NotImplementedError
 		
 

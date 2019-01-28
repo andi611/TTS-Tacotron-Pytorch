@@ -265,6 +265,7 @@ def initialize_training(checkpoint_path, data_root, meta_text):
 				if torch.is_tensor(v):
 					state[k] = v.cuda()
 		try:
+			global global_step, global_epoch
 			global_step = checkpoint["global_step"]
 			global_epoch = checkpoint["global_epoch"]
 		except:

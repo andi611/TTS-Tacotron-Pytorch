@@ -259,6 +259,7 @@ def initialize_training(checkpoint_path, data_root, meta_text):
 		checkpoint = torch.load(checkpoint_path)
 		model.load_state_dict(checkpoint["state_dict"])
 		optimizer.load_state_dict(checkpoint["optimizer"])
+		optimizer.cuda()
 		try:
 			global_step = checkpoint["global_step"]
 			global_epoch = checkpoint["global_epoch"]

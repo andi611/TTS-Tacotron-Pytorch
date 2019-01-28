@@ -42,7 +42,7 @@ class configurations(object):
 		self.embedding_dim = 256
 		self.outputs_per_step = 5
 		self.padding_idx = None
-		self.attention = 'LocationSensitive'
+		self.attention = 'LocationSensitive' # or 'Bahdanau'
 		self.use_mask = False
 
 	def get_loss_config(self):

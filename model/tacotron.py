@@ -158,6 +158,7 @@ class CBHG(nn.Module):
 
 		return outputs
 
+
 ###########
 # ENCODER #
 ###########
@@ -208,6 +209,27 @@ class Decoder(nn.Module):
 
 		self.max_decoder_steps = 800
 
+
+	def initialize_decoder_states(self, encoder_outputs, processed_memory, memory_lengths):
+		B = encoder_outputs.size(0)
+		MAX_TIME = encoder_outputs.size(1)
+		
+		self.initial_input = Variable(encoder_outputs.data.new(B, self.in_dim * self.r).zero_()) # go frames
+
+		self.attention_rnn_hidden = Variable(encoder_outputs.data.new(B, 256).zero_()) # Init decoder states
+		self.decoder_rnn_hiddens = [Variable(encoder_outputs.data.new(B, 256).zero_()) for _ in range(len(self.decoder_rnns))]
+		self.current_attention = Variable(encoder_outputs.data.new(B, 256).zero_())
+
+		if self.attention == 'LocationSensitive':
+			self.attention_weights = Variable(encoder_outputs.data.new(B, MAX_TIME).zero_())
+			self.attention_weights_cum = Variable(encoder_outputs.data.new(B, MAX_TIME).zero_())
+
+		if memory_lengths is not None:
+			self.mask = get_rnn_mask_from_lengths(processed_memory, memory_lengths)
+		else:
+			self.mask = None
+
+
 	"""
 		Decoder forward step.
 
@@ -219,77 +241,56 @@ class Decoder(nn.Module):
 			memory_lengths: Encoder output (memory) lengths. If not None, used for attention masking.
 	"""
 	def forward(self, encoder_outputs, inputs=None, memory_lengths=None):
-		B = encoder_outputs.size(0)
-		MAX_TIME = encoder_outputs.size(1)
-
-		processed_memory = self.attention_rnn.memory_layer(encoder_outputs)
-		
-		if memory_lengths is not None:
-			mask = get_rnn_mask_from_lengths(processed_memory, memory_lengths)
-		else:
-			mask = None
 
 		greedy = inputs is None # Run greedy decoding if inputs is None
 
 		if inputs is not None:
-			
-			if inputs.size(-1) == self.in_dim: # Grouping multiple frames if necessary
-				inputs = inputs.view(B, inputs.size(1) // self.r, -1)
+			if inputs.size(-1) == self.in_dim:
+				inputs = inputs.view(encoder_outputs.size(0), inputs.size(1) // self.r, -1)  # Grouping multiple frames if necessary
 			assert inputs.size(-1) == self.in_dim * self.r
 			T_decoder = inputs.size(1)
-
+			inputs = inputs.transpose(0, 1) # Time first (T_decoder, B, in_dim)
 		
-		initial_input = Variable(encoder_outputs.data.new(B, self.in_dim * self.r).zero_()) # go frames
 
-		attention_rnn_hidden = Variable(encoder_outputs.data.new(B, 256).zero_()) # Init decoder states
-		decoder_rnn_hiddens = [Variable(encoder_outputs.data.new(B, 256).zero_()) for _ in range(len(self.decoder_rnns))]
-		current_attention = Variable(encoder_outputs.data.new(B, 256).zero_())
-
-		if self.attention == 'LocationSensitive':
-			attention_weights = Variable(encoder_outputs.data.new(B, MAX_TIME).zero_())
-			attention_weights_cum = Variable(encoder_outputs.new(B, MAX_TIME).zero_())
-
-		if inputs is not None: # Time first (T_decoder, B, in_dim)
-			inputs = inputs.transpose(0, 1)
-
+		processed_memory = self.attention_rnn.memory_layer(encoder_outputs)
+		self.initialize_decoder_states(encoder_outputs, processed_memory, memory_lengths)
+			
+		t = 0
+		gates = []
 		outputs = []
 		alignments = []
-		gates = []
-
-		t = 0
-		current_input = initial_input
+		current_input = self.initial_input
 		
 		while True:
-			if t > 0:
-				current_input = outputs[-1] if greedy else inputs[t - 1]
+			if t > 0: current_input = outputs[-1] if greedy else inputs[t - 1]
 			
 			current_input = self.prenet(current_input) # Prenet
 
 			if self.attention == 'Bahdanau':
-				attention_rnn_hidden, current_attention, alignment = self.attention_rnn(current_input, 
-																						current_attention, 
-																						attention_rnn_hidden,
-																						encoder_outputs, 
-																						processed_memory=processed_memory, 
-																						mask=mask)
+				self.attention_rnn_hidden, self.current_attention, alignment = self.attention_rnn(current_input, 
+																								  self.current_attention, 
+																								  self.attention_rnn_hidden,
+																								  encoder_outputs, 
+																								  processed_memory=processed_memory, 
+																								  mask=self.mask)
 			elif self.attention == 'LocationSensitive':
-				attention_weights_cat = torch.cat((attention_weights.unsqueeze(1), attention_weights_cum.unsqueeze(1)), dim=1)
+				self.attention_weights_cat = torch.cat((self.attention_weights.unsqueeze(1), self.attention_weights_cum.unsqueeze(1)), dim=1)
 				
-				attention_rnn_hidden, current_attention, alignment = self.attention_rnn(current_input, 
-																						current_attention, 
-																						attention_rnn_hidden, 
-																						encoder_outputs, 
-																						attention_weights_cat, 
-																						processed_memory=processed_memory,
-																						mask=mask)
-				attention_weights_cum += attention_weights
+				self.attention_rnn_hidden, self.current_attention, alignment = self.attention_rnn(current_input, 
+																								  self.current_attention, 
+																								  self.attention_rnn_hidden, 
+																								  encoder_outputs, 
+																								  self.attention_weights_cat, 
+																								  processed_memory=processed_memory,
+																								  mask=self.mask)
+				self.attention_weights_cum += self.attention_weights
 			
-			decoder_input = self.project_to_decoder_in(torch.cat((attention_rnn_hidden, current_attention), -1)) # Concat RNN output and attention context vector
+			decoder_input = self.project_to_decoder_in(torch.cat((self.attention_rnn_hidden, self.current_attention), -1)) # Concat RNN output and attention context vector
 
 			# Pass through the decoder RNNs
 			for idx in range(len(self.decoder_rnns)):
-				decoder_rnn_hiddens[idx] = self.decoder_rnns[idx](decoder_input, decoder_rnn_hiddens[idx])				
-				decoder_input = decoder_rnn_hiddens[idx] + decoder_input # Residual connectinon
+				self.decoder_rnn_hiddens[idx] = self.decoder_rnns[idx](decoder_input, self.decoder_rnn_hiddens[idx])				
+				decoder_input = self.decoder_rnn_hiddens[idx] + decoder_input # Residual connectinon
 
 			output = decoder_input
 			gate = self.sigmoid(self.proj_to_gate(output)).squeeze()
@@ -343,9 +344,10 @@ class Tacotron(nn.Module):
 		self.mel_dim = mel_dim
 		self.linear_dim = linear_dim
 		self.use_mask = use_mask
-		self.embedding = nn.Embedding(n_vocab, embedding_dim, padding_idx=padding_idx)
 		
+		self.embedding = nn.Embedding(n_vocab, embedding_dim, padding_idx=padding_idx)
 		self.embedding.weight.data.normal_(0, 0.3) # Trying smaller std
+		
 		self.encoder = Encoder(embedding_dim)
 		self.decoder = Decoder(mel_dim, r, attention)
 
@@ -359,10 +361,8 @@ class Tacotron(nn.Module):
 		
 		encoder_outputs = self.encoder(inputs, input_lengths) # (B, T', in_dim)
 
-		if self.use_mask:
-			memory_lengths = input_lengths
-		else:
-			memory_lengths = None
+		if self.use_mask: memory_lengths = input_lengths
+		else: memory_lengths = None
 		
 		mel_outputs, alignments, gate_outputs = self.decoder(encoder_outputs, targets, memory_lengths=memory_lengths) # (B, T', mel_dim*r)
 

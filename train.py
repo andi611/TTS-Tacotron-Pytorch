@@ -246,6 +246,7 @@ def initialize_training(checkpoint_path, data_root, meta_text):
 					 linear_dim=config.num_freq,
 					 r=config.outputs_per_step,
 					 padding_idx=config.padding_idx,
+					 attention=config.attention,
 					 use_mask=config.use_mask)
 
 	optimizer = optim.Adam(model.parameters(),

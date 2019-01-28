@@ -13,7 +13,8 @@
 import torch
 from torch import nn
 from torch.autograd import Variable
-from model.attention import BahdanauAttention, AttentionWrapper
+from model.attention import BahdanauAttention, BahdanauAttentionRNN
+from model.attention import LocationSensitiveAttention, LocationAttentionRNN
 from model.loss import get_rnn_mask_from_lengths
 
 
@@ -178,17 +179,23 @@ class Encoder(nn.Module):
 ###########
 class Decoder(nn.Module):
 	
-	def __init__(self, in_dim, r):
+	def __init__(self, in_dim, r, attention):
 		
 		super(Decoder, self).__init__()
 		self.in_dim = in_dim
 		self.r = r
 		self.prenet = Prenet(in_dim * r, sizes=[256, 128])
 		# (prenet_out + attention context) -> output
-		self.attention_rnn = AttentionWrapper(nn.GRUCell(256 + 128, 256), BahdanauAttention(256))
-		self.memory_layer = nn.Linear(256, 256, bias=False)
-		self.project_to_decoder_in = nn.Linear(512, 256)
+		
+		self.attention = attention
+		if self.attention == 'Bahdanau':
+			self.attention_rnn = BahdanauAttentionRNNh(nn.GRUCell(256 + 128, 256), BahdanauAttention(256))
+		elif self.attention == 'LocationSensitive':
+			self.attention_rnn = LocationAttentionRNN(nn.GRUCell(256 + 128, 256), LocationSensitiveAttention(256))
+		else: raise NotImplementedError
+		
 
+		self.project_to_decoder_in = nn.Linear(512, 256)
 		self.decoder_rnns = nn.ModuleList([nn.GRUCell(256, 256) for _ in range(2)])
 
 		self.proj_to_mel = nn.Linear(256, in_dim * self.r)
@@ -209,8 +216,9 @@ class Decoder(nn.Module):
 	"""
 	def forward(self, encoder_outputs, inputs=None, memory_lengths=None):
 		B = encoder_outputs.size(0)
+		MAX_TIME = encoder_outputs.size(1)
 
-		processed_memory = self.memory_layer(encoder_outputs)
+		processed_memory = self.attention_rnn.memory_layer(encoder_outputs)
 		
 		if memory_lengths is not None:
 			mask = get_rnn_mask_from_lengths(processed_memory, memory_lengths)
@@ -229,10 +237,13 @@ class Decoder(nn.Module):
 		
 		initial_input = Variable(encoder_outputs.data.new(B, self.in_dim * self.r).zero_()) # go frames
 
-		
 		attention_rnn_hidden = Variable(encoder_outputs.data.new(B, 256).zero_()) # Init decoder states
 		decoder_rnn_hiddens = [Variable(encoder_outputs.data.new(B, 256).zero_()) for _ in range(len(self.decoder_rnns))]
 		current_attention = Variable(encoder_outputs.data.new(B, 256).zero_())
+
+		if self.attention == 'LocationSensitive':
+			attention_weights = Variable(encoder_outputs.data.new(B, MAX_TIME).zero_())
+			attention_weights_cum = Variable(encoder_outputs.new(B, MAX_TIME).zero_())
 
 		if inputs is not None: # Time first (T_decoder, B, in_dim)
 			inputs = inputs.transpose(0, 1)
@@ -250,11 +261,24 @@ class Decoder(nn.Module):
 			
 			current_input = self.prenet(current_input) # Prenet
 
-			
-			attention_rnn_hidden, current_attention, alignment = self.attention_rnn(
-																 current_input, current_attention, attention_rnn_hidden,
-																 encoder_outputs, processed_memory=processed_memory, mask=mask) # Attention RNN
-
+			if self.attention == 'Bahdanau':
+				attention_rnn_hidden, current_attention, alignment = self.attention_rnn(current_input, 
+																						current_attention, 
+																						attention_rnn_hidden,
+																						encoder_outputs, 
+																						processed_memory=processed_memory, 
+																						mask=mask)
+			elif self.attention == 'LocationSensitive':
+				attention_weights_cat = torch.cat((attention_weights.unsqueeze(1), attention_weights_cum.unsqueeze(1)), dim=1)
+				
+				attention_rnn_hidden, current_attention, alignment = self.attention_rnn(current_input, 
+																						current_attention, 
+																						attention_rnn_hidden, 
+																						encoder_outputs, 
+																						attention_weights_cat, 
+																						processed_memory=processed_memory,
+																						mask=mask)
+				attention_weights_cum += attention_weights
 			
 			decoder_input = self.project_to_decoder_in(torch.cat((attention_rnn_hidden, current_attention), -1)) # Concat RNN output and attention context vector
 
@@ -309,7 +333,7 @@ def is_end_of_frames(output, eps=0.2):
 class Tacotron(nn.Module):
 	
 	def __init__(self, n_vocab, embedding_dim=256, mel_dim=80, linear_dim=1025,
-				 r=5, padding_idx=None, use_mask=False):
+				 r=5, padding_idx=None, attention='Bahdanau', use_mask=False):
 		
 		super(Tacotron, self).__init__()
 		self.mel_dim = mel_dim
@@ -319,7 +343,7 @@ class Tacotron(nn.Module):
 		
 		self.embedding.weight.data.normal_(0, 0.3) # Trying smaller std
 		self.encoder = Encoder(embedding_dim)
-		self.decoder = Decoder(mel_dim, r)
+		self.decoder = Decoder(mel_dim, r, attention)
 
 		self.postnet = CBHG(mel_dim, K=8, projections=[256, mel_dim])
 		self.last_linear = nn.Linear(mel_dim * 2, linear_dim)

@@ -1,5 +1,7 @@
 # Tacotron
-A Pytorch implementation of [Google's Tacotron](https://arxiv.org/pdf/1703.10135.pdf) speech synthesis network, with pre-trained model.
+A Pytorch implementation of [Google's Tacotron](https://arxiv.org/pdf/1703.10135.pdf) speech synthesis network.
+
+This implementation includes pre-trained model and uses the [LJ Speech dataset](https://keithito.com/LJ-Speech-Dataset/).
 
 <img src="https://i.imgur.com/zHp0fNS.png" width="1044" height="537">
 
@@ -20,6 +22,10 @@ Audio quality isn't as good as Google's demo yet, but hopefully it will improve 
 
 
 ## Quick Start
+
+### Setup
+* Clone this repo: `git clone git@github.com:andi611/Tacotron-Pytorch.git`
+* CD into this repo: `cd Tacotron-Pytorch`
 
 ### Installing dependencies
 

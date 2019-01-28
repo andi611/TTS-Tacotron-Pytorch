@@ -159,6 +159,9 @@ def tacotron_step(model, optimizer, criterion,
 #########
 # TRAIN #
 #########
+"""
+	Main training loop
+"""
 def train(model, 
 		  optimizer,
 		  dataloader, 
@@ -225,6 +228,37 @@ def train(model,
 
 		global_epoch += 1
 
+########################
+# WARM FROM CHECKPOINT #
+########################
+"""
+	Initialize training with a pre-trained model pth
+
+	Args:
+		checkpoint_path: ckpt/checkpoint_path200000.pth
+		model: Pytorch model
+		optimizer: Pytorch optimizer
+"""
+def warm_from_ckpt(checkpoint_path, model, optimizer):
+	print('[Trainer] - Warming up! Load checkpoint from: {}'.format(checkpoint_path))
+	checkpoint = torch.load(checkpoint_path)
+	model.load_state_dict(checkpoint['state_dict'])
+	
+	optimizer.load_state_dict(checkpoint['optimizer'])
+	for state in optimizer.state.values():
+		for k, v in state.items():
+			if torch.is_tensor(v):
+				state[k] = v.cuda()
+	try:
+		global global_step, global_epoch
+		global_step = checkpoint['global_step']
+		global_epoch = checkpoint['global_epoch']
+	except:
+		print('[Trainer] - Warning: global step and global epoch unable to restore!')
+		sys.exit(0)
+
+	return model, optimizer
+
 
 #######################
 # INITIALIZE TRAINING #
@@ -252,22 +286,7 @@ def initialize_training(checkpoint_path, data_root, meta_text):
 
 	# Load checkpoint
 	if checkpoint_path != None:
-		print('[Trainer] - Load checkpoint from: {}'.format(checkpoint_path))
-		checkpoint = torch.load(checkpoint_path)
-		model.load_state_dict(checkpoint['state_dict'])
-		
-		optimizer.load_state_dict(checkpoint['optimizer'])
-		for state in optimizer.state.values():
-			for k, v in state.items():
-				if torch.is_tensor(v):
-					state[k] = v.cuda()
-		try:
-			global global_step, global_epoch
-			global_step = checkpoint['global_step']
-			global_epoch = checkpoint['global_epoch']
-		except:
-			print('[Trainer] - Warning: global step and global epoch unable to restore!')
-			sys.exit(0)
+		model, optimizer = warm_from_ckpt(checkpoint_path, model, optimizer)
 			
 	return model, optimizer, dataloader
 

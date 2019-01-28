@@ -103,7 +103,7 @@ def main():
 					 use_memory_mask=config.use_memory_mask)
 
 	#---handle path---#
-	checkpoint_path = args.ckpt_dir + args.checkpoint_name + args.model + '.pth'
+	checkpoint_path = args.ckpt_dir + args.checkpoint_name + args.model_name + '.pth'
 	os.makedirs(args.result_dir, exist_ok=True)
 	
 	#---load and set model---#
@@ -113,7 +113,7 @@ def main():
 	model.decoder.max_decoder_steps = args.max_decoder_steps # Set large max_decoder steps to handle long sentence outputs
 		
 	if args.interactive == True:
-		output_name = args.result_dir + args.model
+		output_name = args.result_dir + args.model_name
 
 		#---testing loop---#
 		while True:
@@ -128,7 +128,7 @@ def main():
 				break
 
 	elif args.interactive == False:
-		output_name = args.result_dir + args.model + '/'
+		output_name = args.result_dir + args.model_name + '/'
 		os.makedirs(output_name, exist_ok=True)
 
 		#---testing flow---#

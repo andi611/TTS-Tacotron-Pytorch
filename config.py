@@ -81,11 +81,12 @@ config = configurations()
 def get_training_args():
 	parser = argparse.ArgumentParser(description='training arguments')
 
-	parser.add_argument('--checkpoint_dir', type=str, default='./ckpt_train', help='Directory where to save model checkpoints')
-	parser.add_argument('--checkpoint_path', type=str, default=None, help='Restore model from checkpoint path if given')
+	parser.add_argument('--ckpt_dir', type=str, default='./ckpt', help='Directory where to save model checkpoints')
+	parser.add_argument('--model_name', type=str, default=None, help='Restore model from checkpoint path if name is given')
 	parser.add_argument('--data_root', type=str, default='./data/meta', help='Directory that contains preprocessed model-ready features')
 	parser.add_argument('--meta_text', type=str, default='meta_text.txt', help='Model-ready training transcripts')
-	parser.add_argument('--summary_comment', type=str, default=None, help='Comment for log summary writer')
+	parser.add_argument('--log_dir', type=str, default=None, help='Directory for log summary writer to write in')
+	parser.add_argument('--log_comment', type=str, default=None, help='Comment to add to the directory for log summary writer')
 
 	args = parser.parse_args()
 	return args
@@ -127,7 +128,7 @@ def get_test_args():
 	path_parser.add_argument('--result_dir', type=str, default='./result/', help='path to output test results')
 	path_parser.add_argument('--ckpt_dir', type=str, default='./ckpt/', help='path to the directory where model checkpoints are saved')
 	path_parser.add_argument('--checkpoint_name', type=str, default='checkpoint_step', help='model name prefix for checkpoint files')
-	path_parser.add_argument('--model', type=str, default='480000', help='model step name for checkpoint files')
+	path_parser.add_argument('--model_name', type=str, default='480000', help='model step name for checkpoint files')
 	path_parser.add_argument('--test_file_path', type=str, default='./data/test_transcripts.txt', help='path to the input test transcripts')
 	
 	args = parser.parse_args()

@@ -8,7 +8,7 @@ This implementation includes pre-trained model and uses the [LJ Speech dataset](
 ## Introduction
 This work is based on [r9y9/tacotron_pytorch](https://github.com/r9y9/tacotron_pytorch), the main differences are:
 * Adds **location-sensitive attention** and the **stop token** from the [Tacotron 2](https://arxiv.org/pdf/1712.05884.pdf) paper.
-  This can greatly reduce the amount of data required to train a model, and is refer to as `gate` in this implementation.
+  This can greatly reduce the amount of time and data required to train a model.
 * Remove all TensorFlow dependencies that [r9y9](https://github.com/r9y9/tacotron_pytorch) uses, now it runs on PyTorch and PyTorch only.
 * Adds a [loss](model/loss.py) module, and use MSE loss instead of L1 loss.
 * Adds a [data loader](dataloader.py) module.
@@ -39,17 +39,6 @@ Audio quality isn't as good as Google's demo yet, but hopefully it will improve 
 	pip3 install -r requirements.txt
 	```
 	*Warning: you need to install torch depending on your platform. Here list the Pytorch version used when built this project was built.*
-
-
-### Using a pre-trained model
-* **Run the testing environment with interactive mode**:
-	```
-	python3 test.py --interactive --plot --model 470000
-	```
-* **Run the testing algorithm on a set of transcripts** (Results can be found in the [result/480000](result/480000) directory) :
-	```
-	python3 test.py --plot --model 480000 --test_file_path ../data/text/test_sample.txt
-	```
 
 
 ### Training
@@ -91,19 +80,35 @@ Audio quality isn't as good as Google's demo yet, but hopefully it will improve 
 
 4. **Train a model using [train.py](train.py)**
 	```
-	python3 train.py
+	python3 train.py --ckpt_dir ckpt/ --log_dir log/
+	```
+
+	Restore training from a previous checkpoint:
+	```
+	python3 train.py --ckpt_dir ckpt/ --log_dir log/ --model_name 480000
 	```
 
 	Tunable hyperparameters are found in [config.py](config.py). 
 	
 	You can adjust these parameters and setting by editing the file, the default hyperparameters are recommended for LJ Speech.
 
-6. **Monitor with TensorboardX** (optional)
+5. **Monitor with Tensorboard** (OPTIONAL)
 	```
-	tensorboard --logdir 'path to log dir'
+	tensorboard --logdir 'path to log_dir'
 	```
 
-	The trainer dumps audio and alignments every 2000 steps by default. You can find these in `tacotron/ckpt`.
+	The trainer dumps audio and alignments every 2000 steps by default. You can find these in `tacotron/ckpt/`.
+
+
+### Testing: Using a pre-trained model and [test.py](test.py)
+* **Run the testing environment with interactive mode**:
+	```
+	python3 test.py --interactive --plot --model_name 470000
+	```
+* **Run the testing algorithm on a set of transcripts** (Results can be found in the [result/480000](result/480000) directory) :
+	```
+	python3 test.py --plot --model_name 480000 --test_file_path ../data/text/test_sample.txt
+	```
 
 
 ## Acknowledgement

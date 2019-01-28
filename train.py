@@ -11,11 +11,12 @@
 	Usage: train.py [options]
 
 	Options:
-		--checkpoint_dir <dir>    Directory where to save model checkpoints [default: checkpoints].
-		--checkpoint_path <name>  Restore model from checkpoint path if given.
+		--ckpt_dir <dir>    	  Directory where to save model checkpoints [default: checkpoints].
+		--model_name <name>  	  Restore model from checkpoint path if name is given.
 		--data_root <dir>         Directory contains preprocessed features.
 		--meta_text <name>        Name of the model-ready training transcript.
-		--summary_comment <str>   Comment for log summary writer.
+		--log_dir <str>   	  	  Directory for log summary writer to write in.
+		--log_comment <str>   	  Comment for log summary writer.
 		-h, --help                Show this help message and exit
 """
 
@@ -165,8 +166,9 @@ def tacotron_step(model, optimizer, criterion,
 def train(model, 
 		  optimizer,
 		  dataloader, 
-		  summary_comment,
 		  init_lr=0.002,
+		  log_dir=None,
+		  log_comment=None,
 		  checkpoint_dir=None, 
 		  checkpoint_interval=None, 
 		  max_epochs=None,
@@ -179,7 +181,12 @@ def train(model,
 	model.train()
 	criterion = TacotronLoss()
 	
-	writer = SummaryWriter() if summary_comment == None else SummaryWriter(summary_comment)
+	if log_dir != None:
+		writer = SummaryWriter(log_dir)
+	elif log_comment != None:
+		writer = SummaryWriter(comment=log_comment)
+	else:
+		writer = SummaryWriter()
 
 	global global_step, global_epoch
 
@@ -239,8 +246,9 @@ def train(model,
 		model: Pytorch model
 		optimizer: Pytorch optimizer
 """
-def warm_from_ckpt(checkpoint_path, model, optimizer):
+def warm_from_ckpt(checkpoint_dir, model_name, model, optimizer):
 	print('[Trainer] - Warming up! Load checkpoint from: {}'.format(checkpoint_path))
+	checkpoint_path = os.path.join(checkpoint_dir, "checkpoint_step{}.pth".format(model_name))
 	checkpoint = torch.load(checkpoint_path)
 	model.load_state_dict(checkpoint['state_dict'])
 	
@@ -266,7 +274,7 @@ def warm_from_ckpt(checkpoint_path, model, optimizer):
 """
 	Setup and prepare for Tacotron training.
 """
-def initialize_training(checkpoint_path, data_root, meta_text):
+def initialize_training(data_root, meta_text, checkpoint_dir=None, model_name=None):
 	
 	dataloader = Dataloader(data_root, meta_text)
 
@@ -285,8 +293,8 @@ def initialize_training(checkpoint_path, data_root, meta_text):
 						   weight_decay=config.weight_decay)
 
 	# Load checkpoint
-	if checkpoint_path != None:
-		model, optimizer = warm_from_ckpt(checkpoint_path, model, optimizer)
+	if model_name != None:
+		model, optimizer = warm_from_ckpt(checkpoint_dir, model_name, model, optimizer)
 			
 	return model, optimizer, dataloader
 
@@ -298,15 +306,17 @@ def main():
 
 	args = get_training_args()
 
-	os.makedirs(args.checkpoint_dir, exist_ok=True)
+	os.makedirs(args.ckpt_dir, exist_ok=True)
 
-	model, optimizer, dataloader = initialize_training(args.checkpoint_path, args.data_root, args.meta_text)
+	model, optimizer, dataloader = initialize_training(args.data_root, args.meta_text, args.ckpt_dir, args.model_name)
 
 	# Train!
 	try:
-		train(model, optimizer, dataloader, args.summary_comment,
+		train(model, optimizer, dataloader,
 			  init_lr=config.initial_learning_rate,
-			  checkpoint_dir=args.checkpoint_dir,
+			  log_dir=args.log_dir,
+			  log_comment=args.log_comment,
+			  checkpoint_dir=args.ckpt_dir,
 			  checkpoint_interval=config.checkpoint_interval,
 			  max_epochs=config.max_epochs,
 			  max_steps=config.max_steps,

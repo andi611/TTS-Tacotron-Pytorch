@@ -199,7 +199,6 @@ class Decoder(nn.Module):
 											  attention='LocationSensitive')
 		else: raise NotImplementedError
 		
-
 		self.project_to_decoder_in = nn.Linear(512, 256)
 		self.decoder_rnns = nn.ModuleList([nn.GRUCell(256, 256) for _ in range(2)])
 

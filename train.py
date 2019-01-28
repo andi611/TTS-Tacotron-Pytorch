@@ -75,26 +75,22 @@ def save_states(global_step, mel_outputs, linear_outputs, attn, y, checkpoint_di
 	idx = 1 # idx = np.random.randint(0, len(mel_outputs))
 
 	# Alignment
-	path = os.path.join(checkpoint_dir, "step{}_alignment.png".format(
-		global_step))
+	path = os.path.join(checkpoint_dir, "step{}_alignment.png".format(global_step))
 	alignment = attn[idx].cpu().data.numpy() # alignment = attn[idx].cpu().data.numpy()[:, :input_length]
 	plot_alignment(alignment.T, path, info="tacotron, step={}".format(global_step))
 
 	# Predicted spectrogram
-	path = os.path.join(checkpoint_dir, "step{}_predicted_spectrogram.png".format(
-		global_step))
+	path = os.path.join(checkpoint_dir, "step{}_predicted_spectrogram.png".format(global_step))
 	linear_output = linear_outputs[idx].cpu().data.numpy()
 	plot_spectrogram(linear_output, path)
 
 	# Predicted audio signal
 	signal = audio.inv_spectrogram(linear_output.T)
-	path = os.path.join(checkpoint_dir, "step{}_predicted.wav".format(
-		global_step))
+	path = os.path.join(checkpoint_dir, "step{}_predicted.wav".format(global_step))
 	audio.save_wav(signal, path)
 
 	# Target spectrogram
-	path = os.path.join(checkpoint_dir, "step{}_target_spectrogram.png".format(
-		global_step))
+	path = os.path.join(checkpoint_dir, "step{}_target_spectrogram.png".format(global_step))
 	linear_output = y[idx].cpu().data.numpy()
 	plot_spectrogram(linear_output, path)
 

@@ -191,8 +191,8 @@ def train(model,
 		for x, mel, y, gate, sorted_lengths in dataloader:
 			
 			model, optimizer, Ms, Rs = tacotron_step(model, optimizer, criterion,
-												 	x, mel, y, gate, sorted_lengths,
-												 	init_lr, clip_thresh, global_step)
+													x, mel, y, gate, sorted_lengths,
+													init_lr, clip_thresh, global_step)
 
 			mel_outputs = Ms['mel_outputs']
 			linear_outputs = Ms['linear_outputs']
@@ -258,8 +258,12 @@ def initialize_training(checkpoint_path, data_root, meta_text):
 		print("Load checkpoint from: {}".format(checkpoint_path))
 		checkpoint = torch.load(checkpoint_path)
 		model.load_state_dict(checkpoint["state_dict"])
+		
 		optimizer.load_state_dict(checkpoint["optimizer"])
-		optimizer.cuda()
+		for state in optimizer.state.values():
+			for k, v in state.items():
+				if torch.is_tensor(v):
+					state[k] = v.cuda()
 		try:
 			global_step = checkpoint["global_step"]
 			global_epoch = checkpoint["global_epoch"]

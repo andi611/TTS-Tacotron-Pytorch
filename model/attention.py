@@ -252,7 +252,7 @@ class LocationAttentionRNN(nn.Module):
 
 		cell_input = torch.cat((query, attention), -1) # Concat input query and previous attention context
 		cell_output = self.rnn_cell(cell_input, cell_state) # Feed it to RNN
-		alignment = self.attention_mechanism(query, processed_memory, attention_weights_cat)
+		alignment = self.attention_mechanism(cell_output, processed_memory, attention_weights_cat)
 
 		if mask is not None:
 			alignment.data.masked_fill_(mask, self.score_mask_value)

@@ -243,7 +243,7 @@ class LocationAttentionRNN(nn.Module):
 				attention_weights_cat, 
 				processed_memory=None,
 				mask=None,
-				memory_length=None):
+				memory_lengths=None):
 
 		if processed_memory is None:
 			processed_memory = memory
@@ -263,4 +263,3 @@ class LocationAttentionRNN(nn.Module):
 
 		return cell_output, attention, alignment
 
-		

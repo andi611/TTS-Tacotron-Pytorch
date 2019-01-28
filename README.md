@@ -5,9 +5,9 @@ A Pytorch implementation of [Google's Tacotron](https://arxiv.org/pdf/1703.10135
 
 ## Introduction
 This work is based on [r9y9/tacotron_pytorch](https://github.com/r9y9/tacotron_pytorch), the main differences are:
-* Adds the **stop token** from the [Tacotron 2](https://arxiv.org/pdf/1712.05884.pdf) paper.
+* Adds **location-sensitive attention** and the **stop token** from the [Tacotron 2](https://arxiv.org/pdf/1712.05884.pdf) paper.
   This can greatly reduce the amount of data required to train a model, and is refer to as `gate` in this implementation.
-* Remove all TensorFlow dependencies that [r9y9](https://github.com/r9y9/) uses, now it runs on PyTorch and PyTorch only.
+* Remove all TensorFlow dependencies that [r9y9](https://github.com/r9y9/tacotron_pytorch) uses, now it runs on PyTorch and PyTorch only.
 * Adds a [loss](model/loss.py) module, and use MSE loss instead of L1 loss.
 * Adds a [data loader](dataloader.py) module.
 * Incorporate the LJ Speech data preprocessing script from [keithito](https://github.com/keithito/tacotron).
@@ -102,4 +102,8 @@ Audio quality isn't as good as Google's demo yet, but hopefully it will improve 
 
 ## Acknowledgement
 Credits to Ryuichi Yamamoto for a wonderful Pytorch implementation of [Tacotron](https://github.com/r9y9/tacotron_pytorch), which this work is  mainly based on.
+
+## TODO
+* Add more configurable hparams
+* provide trained models and audio samples
 

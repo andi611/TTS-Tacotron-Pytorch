@@ -22,6 +22,7 @@ class configurations(object):
 	def __init__(self):
 		self.get_audio_config()
 		self.get_model_config()
+		self.get_loss_config()
 		self.get_dataloader_config()
 		self.get_training_config()
 		self.get_testing_config()

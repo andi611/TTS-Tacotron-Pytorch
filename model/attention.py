@@ -52,7 +52,7 @@ class BahdanauAttentionRNN(nn.Module):
 				 attention_mechanism,
 				 score_mask_value=-float("inf")):
 
-		super(AttentionRNN, self).__init__()
+		super(BahdanauAttentionRNN, self).__init__()
 
 		self.rnn_cell = rnn_cell
 		self.attention_mechanism = attention_mechanism
@@ -220,7 +220,7 @@ class LocationAttentionRNN(nn.Module):
 				 attention_mechanism,
 				 score_mask_value=-float("inf")):
 
-		super(Attention, self).__init__()
+		super(LocationAttentionRNN, self).__init__()
 		
 		self.rnn_cell = rnn_cell
 		self.attention_mechanism = attention_mechanism

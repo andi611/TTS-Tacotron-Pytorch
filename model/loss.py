@@ -39,9 +39,9 @@ class TacotronLoss(nn.Module):
 		mel_loss = self.criterion(mel_outputs, mel)
 		n_priority_freq = int(self.prior_freq / (self.sample_rate * 0.5) * self.linear_dim)
 		linear_loss = (1 - self.prior_weight) * self.criterion(linear_outputs, linear) + self.prior_weight * self.criterion(linear_outputs[:, :, :n_priority_freq], linear[:, :, :n_priority_freq])
-		gate_loss = self.criterion_gate(gate_outputs, gate)
+		gate_loss = self.gate_coefficient * self.criterion_gate(gate_outputs, gate)
 		
-		loss = mel_loss + linear_loss + (self.gate_coefficient * gate_loss)
+		loss = mel_loss + linear_loss + gate_loss
 		losses = [loss, mel_loss, linear_loss, gate_loss]
 		return losses
 

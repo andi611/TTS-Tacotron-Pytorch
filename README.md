@@ -119,7 +119,7 @@ Audio quality isn't as good as Google's demo yet, but hopefully it will improve 
 
 
 ## Acknowledgement
-Credits to Ryuichi Yamamoto for a wonderful Pytorch implementation of [Tacotron](https://github.com/r9y9/tacotron_pytorch), which this work is  mainly based on.
+Credits to Ryuichi Yamamoto for a wonderful Pytorch [implementation]((https://github.com/r9y9/tacotron_pytorch)) of Tacotron, which this work is mainly based on. This work is also inspired by [NVIDIA's](https://github.com/NVIDIA/tacotron2) Tacotron 2 PyTorch implementation.
 
 ## TODO
 * Add more configurable hparams

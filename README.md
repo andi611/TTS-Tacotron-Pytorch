@@ -16,7 +16,12 @@ This work is based on [r9y9/tacotron_pytorch](https://github.com/r9y9/tacotron_p
 * Code factoring and optimization for easier debug and extend in the furture.
 
 The main differences from the original [Tacotron]((https://arxiv.org/pdf/1703.10135.pdf)) paper:
-* TODO
+* Predict r=5 non-overlapping consecutive out-put frames at each decoder step instead of r=2.
+* Feed all r frames to the next decoder input step instead of just the last frame of r frames.
+* Scale the loss on predicted linear spectrograms so that lower frequencies that corresponds to human speech (0 to 3000 Hz) weighs more.
+* Did not use a loss mask in sequence-to-sequence learning, this forces the model to learn when to stop synthesis.
+* Disable bias for the 1-Dimensional convolution unit in the CBHG modulehas.
+These implementation details helps the model's convergence.
 
 Audio quality isn't as good as Google's demo yet, but hopefully it will improve eventually. Pull requests are welcome!
 
@@ -52,11 +57,11 @@ Audio quality isn't as good as Google's demo yet, but hopefully it will improve 
 
 	After unpacking, your tree should look like this for LJ Speech:
 	```
- |- Tacotron-Pytorch
-	 |- data
-		 |- LJSpeech-1.1
-			 |- metadata.csv
-			 |- wavs
+	 |- Tacotron-Pytorch
+		 |- data
+			 |- LJSpeech-1.1
+				 |- metadata.csv
+				 |- wavs
 	```
 
 3. **Preprocess the LJ Speech dataset and make model-ready meta files using [preprocess.py](preprocess.py):**
@@ -66,16 +71,16 @@ Audio quality isn't as good as Google's demo yet, but hopefully it will improve 
 
 	After preprocessing, your tree will look like this:
 	```
- |- Tacotron-Pytorch
-	 |- data
-		 |- LJSpeech-1.1 (The downloaded dataset)
-			 |- metadata.csv
-			 |- wavs
-		 |- meta (generate by preprocessing)
-			 |- meta_text.txt 
-			 |- meta_mel_xxxxx.npy ...
-			 |- meta_spec_xxxxx.npy ...
-		 |- test_transcripts.txt (provided)
+	 |- Tacotron-Pytorch
+		 |- data
+			 |- LJSpeech-1.1 (The downloaded dataset)
+				 |- metadata.csv
+				 |- wavs
+			 |- meta (generate by preprocessing)
+				 |- meta_text.txt 
+				 |- meta_mel_xxxxx.npy ...
+				 |- meta_spec_xxxxx.npy ...
+			 |- test_transcripts.txt (provided)
 	```
 
 4. **Train a model using [train.py](train.py)**

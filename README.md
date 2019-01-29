@@ -6,16 +6,16 @@ This implementation includes pre-trained model and uses the [LJ Speech dataset](
 <img src="https://i.imgur.com/zHp0fNS.png" width="1044" height="537">
 
 ## Introduction
-This work is based on [r9y9/tacotron_pytorch](https://github.com/r9y9/tacotron_pytorch), the main differences are:
-* Adds **location-sensitive attention** and the **stop token** from the [Tacotron 2](https://arxiv.org/pdf/1712.05884.pdf) paper.
+This implementation is based on [r9y9/tacotron_pytorch](https://github.com/r9y9/tacotron_pytorch), the main differences are:
+* Adds **Location-Sensitive Attention** and the **Stop Token** from the [Tacotron 2](https://arxiv.org/pdf/1712.05884.pdf) paper.
   This can greatly reduce the amount of time and data required to train a model.
-* Remove all TensorFlow dependencies that [r9y9](https://github.com/r9y9/tacotron_pytorch) uses, now it runs on PyTorch and PyTorch only.
-* Adds a [loss](model/loss.py) module, and use MSE loss instead of L1 loss.
+* Remove all TensorFlow dependencies that [r9y9](https://github.com/r9y9/tacotron_pytorch) uses, now it **runs on PyTorch and PyTorch only**.
+* Adds a [loss](model/loss.py) module, and use L2 (MSE) loss instead of L1 loss.
 * Adds a [data loader](dataloader.py) module.
 * Incorporate the LJ Speech data preprocessing script from [keithito](https://github.com/keithito/tacotron).
 * Code factoring and optimization for easier debug and extend in the furture.
 
-The main differences from the original [Tacotron]((https://arxiv.org/pdf/1703.10135.pdf)) paper:
+Furthermore, some differences from the original [Tacotron](https://arxiv.org/pdf/1703.10135.pdf) paper are:
 * Predict r=5 non-overlapping consecutive out-put frames at each decoder step instead of r=2.
 * Feed all r frames to the next decoder input step instead of just the last frame of r frames.
 * Scale the loss on predicted linear spectrograms so that lower frequencies that corresponds to human speech (0 to 3000 Hz) weighs more.

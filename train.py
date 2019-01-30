@@ -247,8 +247,9 @@ def train(model,
 		optimizer: Pytorch optimizer
 """
 def warm_from_ckpt(checkpoint_dir, model_name, model, optimizer):
-	print('[Trainer] - Warming up! Load checkpoint from: {}'.format(checkpoint_path))
 	checkpoint_path = os.path.join(checkpoint_dir, "checkpoint_step{}.pth".format(model_name))
+	print('[Trainer] - Warming up! Load checkpoint from: {}'.format(checkpoint_path))
+	
 	checkpoint = torch.load(checkpoint_path)
 	model.load_state_dict(checkpoint['state_dict'])
 	

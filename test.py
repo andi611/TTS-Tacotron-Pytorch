@@ -128,8 +128,8 @@ def main():
 			
 			lines = f.readlines()
 			for idx, line in enumerate(lines):
-				print("{}: {} - ({} chars)".format(idx, line, len(line)))
-				synthesis_speech(model, text=line, figures=args.plot, path=output_name+str(idx))
+				print("{}: {} - ({} chars)".format(idx+1, line, len(line)))
+				synthesis_speech(model, text=line, figures=args.plot, path=output_name+str(idx+1))
 
 		print("Finished! Check out {} for generated audio samples.".format(output_name))
 	

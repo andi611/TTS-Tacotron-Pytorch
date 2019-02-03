@@ -323,9 +323,9 @@ def main():
 			  max_steps=config.max_steps,
 			  clip_thresh=config.clip_thresh)
 	except KeyboardInterrupt:
-		print()
 		pass
 
+	print()
 	print('[Trainer] - Finished!')
 	sys.exit(0)
 

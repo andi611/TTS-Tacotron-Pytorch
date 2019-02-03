@@ -138,7 +138,7 @@ def main():
 			for idx, line in enumerate(lines):
 				text = ch2pinyin(line)
 				print("{}: {} - {} ({} words, {} chars)".format(idx, line, text, len(line), len(text)))
-				synthesis_speech(model, text=text, figures=args.plot, path=output_name+line)
+				synthesis_speech(model, text=text, figures=args.plot, path=output_name+idx)
 
 		print("Finished! Check out {} for generated audio samples.".format(output_name))
 	

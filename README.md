@@ -5,7 +5,7 @@ This implementation also includes the **Location-Sensitive Attention** and the *
 
 Furthermore, the model is trained on the [LJ Speech dataset](https://keithito.com/LJ-Speech-Dataset/), with trained model provided.
 
-<img src="https://i.imgur.com/zHp0fNS.png" width="1044" height="537">
+<img src="https://github.com/andi611/Tacotron-Pytorch/blob/master/result/checkpoint_step500000_all.png">
 
 ## Introduction
 This implementation is based on [r9y9/tacotron_pytorch](https://github.com/r9y9/tacotron_pytorch), the main differences are:

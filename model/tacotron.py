@@ -327,7 +327,7 @@ class Decoder(nn.Module):
 		return outputs, alignments, gates
 
 
-def is_end_of_gates(gate, thd=0.5):
+def is_end_of_gates(gate, thd=0.9):
 	return (gate.data <= thd).all()
 
 

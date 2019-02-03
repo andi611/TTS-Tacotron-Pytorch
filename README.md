@@ -125,5 +125,4 @@ Credits to Ryuichi Yamamoto for a wonderful Pytorch [implementation]((https://gi
 
 ## TODO
 * Add more configurable hparams
-* provide trained models and audio samples
 

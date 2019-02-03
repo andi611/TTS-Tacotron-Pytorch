@@ -111,7 +111,7 @@ def main():
 	print('Loading model: ', checkpoint_path)
 	checkpoint = torch.load(checkpoint_path)
 	model.load_state_dict(checkpoint["state_dict"])
-	model.decoder.max_decoder_steps = args.max_decoder_steps # Set large max_decoder steps to handle long sentence outputs
+	model.decoder.max_decoder_steps = config.max_decoder_steps # Set large max_decoder steps to handle long sentence outputs
 		
 	if args.interactive == True:
 		output_name = args.result_dir + args.model_name

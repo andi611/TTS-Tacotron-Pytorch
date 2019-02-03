@@ -1,4 +1,4 @@
-
+Hi! My name is Tacotron.
 I'm born in the Speech lab of National Taiwan University.
 Generative adversarial network or variational auto-encoder.
 He has read the whole thing.

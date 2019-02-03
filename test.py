@@ -18,7 +18,6 @@ import librosa
 import librosa.display
 import numpy as np
 from tqdm import tqdm
-from pypinyin import Style, pinyin
 #--------------------------------#
 import torch
 from torch.autograd import Variable
@@ -79,14 +78,6 @@ def synthesis_speech(model, text, figures=True, path=None):
 	librosa.output.write_wav(path + '.wav', waveform, config.sample_rate)
 
 
-#############
-# CH2PINYIN #
-#############
-def ch2pinyin(txt_ch):
-	ans = pinyin(txt_ch, style=Style.TONE2, errors=lambda x: x, strict=False)
-	return ' '.join([x[0] for x in ans if x[0] != 'EMPH_A'])
-
-
 ########
 # MAIN #
 ########
@@ -121,7 +112,6 @@ def main():
 		while True:
 			try:
 				text = str(input('< Tacotron > Text to speech: '))
-				text = ch2pinyin(text)
 				print('Model input: ', text)
 				synthesis_speech(model, text=text, figures=args.plot, path=output_name)
 			except KeyboardInterrupt:
@@ -138,9 +128,8 @@ def main():
 			
 			lines = f.readlines()
 			for idx, line in enumerate(lines):
-				text = ch2pinyin(line)
-				print("{}: {} - {} ({} words, {} chars)".format(idx, line, text, len(line), len(text)))
-				synthesis_speech(model, text=text, figures=args.plot, path=output_name+str(idx))
+				print("{}: {} - ({} chars)".format(idx, line, len(line)))
+				synthesis_speech(model, text=line, figures=args.plot, path=output_name+str(idx))
 
 		print("Finished! Check out {} for generated audio samples.".format(output_name))
 	

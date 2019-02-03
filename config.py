@@ -121,14 +121,13 @@ def get_test_args():
 	parser = argparse.ArgumentParser(description='testing arguments')
 
 	parser.add_argument('--plot', action='store_true', help='whether to plot')
-	parser.add_argument('--long_input', action='store_true', help='whether to set the model for long input')
 	parser.add_argument('--interactive', action='store_true', help='whether to test in an interactive mode')
 
 	path_parser = parser.add_argument_group('path')
 	path_parser.add_argument('--result_dir', type=str, default='./result/', help='path to output test results')
 	path_parser.add_argument('--ckpt_dir', type=str, default='./ckpt/', help='path to the directory where model checkpoints are saved')
 	path_parser.add_argument('--checkpoint_name', type=str, default='checkpoint_step', help='model name prefix for checkpoint files')
-	path_parser.add_argument('--model_name', type=str, default='480000', help='model step name for checkpoint files')
+	path_parser.add_argument('--model_name', type=str, default='500000', help='model step name for checkpoint files')
 	path_parser.add_argument('--test_file_path', type=str, default='./data/test_transcripts.txt', help='path to the input test transcripts')
 	
 	args = parser.parse_args()

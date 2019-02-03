@@ -303,10 +303,11 @@ class Decoder(nn.Module):
 
 			# testing 
 			if greedy:
-				if t > 1 and is_end_of_gates(gate):
-					print('Terminated by gate!')
-					break
-				elif t > 1 and is_end_of_frames(output):
+				print(gate.data)
+				# if t > 1 and is_end_of_gates(gate):
+				# 	print('Terminated by gate!')
+				# 	break
+				if t > 1 and is_end_of_frames(output):
 					print('Terminated by silent frames!')
 					break
 				elif t > self.max_decoder_steps:

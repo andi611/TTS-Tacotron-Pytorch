@@ -303,7 +303,7 @@ class Decoder(nn.Module):
 
 			# testing 
 			if greedy:
-				if gate > 0.5:
+				if t > 1 and is_end_of_gates(gate):
 					print('Terminated by gate!')
 					break
 				elif t > 1 and is_end_of_frames(output):
@@ -325,6 +325,10 @@ class Decoder(nn.Module):
 		gates = torch.stack(gates).transpose(0, 1).contiguous()
 
 		return outputs, alignments, gates
+
+
+def is_end_of_gates(gate, thd=0.5):
+	return (gate.data <= thd).all()
 
 
 def is_end_of_frames(output, eps=0.2):

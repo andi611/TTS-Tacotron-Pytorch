@@ -7,6 +7,8 @@ Furthermore, the model is trained on the [LJ Speech dataset](https://keithito.co
 
 <img src="https://github.com/andi611/Tacotron-Pytorch/blob/master/result/checkpoint_step500000_all.png">
 
+Audio samples can be found in the [result](result/500000) directory.
+
 ## Introduction
 This implementation is based on [r9y9/tacotron_pytorch](https://github.com/r9y9/tacotron_pytorch), the main differences are:
 * Adds **Location-Sensitive Attention** and the **Stop Token** from the [Tacotron 2](https://arxiv.org/pdf/1712.05884.pdf) paper.

@@ -92,7 +92,7 @@ Audio quality isn't as good as Google's demo yet, but hopefully it will improve 
 
 	Restore training from a previous checkpoint:
 	```
-	python3 train.py --ckpt_dir ckpt/ --log_dir log/ --model_name 480000
+	python3 train.py --ckpt_dir ckpt/ --log_dir log/ --model_name 500000
 	```
 
 	Tunable hyperparameters are found in [config.py](config.py). 
@@ -110,11 +110,11 @@ Audio quality isn't as good as Google's demo yet, but hopefully it will improve 
 ### Testing: Using a pre-trained model and [test.py](test.py)
 * **Run the testing environment with interactive mode**:
 	```
-	python3 test.py --interactive --plot --model_name 470000
+	python3 test.py --interactive --plot --model_name 500000
 	```
-* **Run the testing algorithm on a set of transcripts** (Results can be found in the [result/480000](result/480000) directory) :
+* **Run the testing algorithm on a set of transcripts** (Results can be found in the [result/500000](result/500000) directory) :
 	```
-	python3 test.py --plot --model_name 480000 --test_file_path ../data/text/test_sample.txt
+	python3 test.py --plot --model_name 500000 --test_file_path ./data/test_transcripts.txt
 	```
 
 

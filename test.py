@@ -100,7 +100,8 @@ def main():
 					 linear_dim=config.num_freq,
 					 r=config.outputs_per_step,
 					 padding_idx=config.padding_idx,
-					 use_memory_mask=config.use_memory_mask)
+					 attention=config.attention,
+					 use_mask=config.use_mask)
 
 	#---handle path---#
 	checkpoint_path = args.ckpt_dir + args.checkpoint_name + args.model_name + '.pth'

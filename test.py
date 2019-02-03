@@ -45,7 +45,8 @@ def tts(model, text):
 	"""
 	if USE_CUDA:
 		model = model.cuda()
-	# TODO: Turning off dropout of decoder's prenet causes serious performance regression, not sure why.
+	
+	# NOTE: dropout in the decoder should be activated for generalization!
 	# model.decoder.eval()
 	model.encoder.eval()
 	model.postnet.eval()
@@ -56,7 +57,7 @@ def tts(model, text):
 		sequence = sequence.cuda()
 
 	# Greedy decoding
-	mel_outputs, linear_outputs, alignments = model(sequence)
+	mel_outputs, linear_outputs, gate_outputs, alignments = model(sequence)
 
 	linear_output = linear_outputs[0].cpu().data.numpy()
 	spectrogram = audio._denormalize(linear_output)

@@ -65,7 +65,7 @@ def main():
 		make_meta(args.text_input_path, args.audio_input_dir, args.meta_dir, args.meta_text, args.file_suffix, args.num_workers, config.frame_shift_ms)
 
 	#---dataset analyze---#
-	elif args.mode == 'all' or args.mode == 'analyze':
+	if args.mode == 'all' or args.mode == 'analyze':
 		dataset_analysis(args.audio_input_dir, args.file_suffix)
 	
 	else:

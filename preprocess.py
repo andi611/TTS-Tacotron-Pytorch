@@ -60,13 +60,15 @@ def main():
 
 	args = get_preprocess_args()
 
-	#---preprocess text and data to be model ready---#
-	if args.mode == 'all' or args.mode == 'make':
-		make_meta(args.text_input_path, args.audio_input_dir, args.meta_dir, args.meta_text, args.file_suffix, args.num_workers, config.frame_shift_ms)
+	if args.mode == 'all' or args.mode == 'make' or args.mode == 'analyze':
+		
+		#---preprocess text and data to be model ready---#
+		if args.mode == 'all' or args.mode == 'make':
+			make_meta(args.text_input_path, args.audio_input_dir, args.meta_dir, args.meta_text, args.file_suffix, args.num_workers, config.frame_shift_ms)
 
-	#---dataset analyze---#
-	if args.mode == 'all' or args.mode == 'analyze':
-		dataset_analysis(args.audio_input_dir, args.file_suffix)
+		#---dataset analyze---#
+		if args.mode == 'all' or args.mode == 'analyze':
+			dataset_analysis(args.audio_input_dir, args.file_suffix)
 	
 	else:
 		raise RuntimeError('Invalid mode!')

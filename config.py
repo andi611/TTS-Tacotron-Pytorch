@@ -55,7 +55,7 @@ class configurations(object):
 		self.num_workers = cpu_count() # or just set 2
 
 	def get_training_config(self):
-		self.batch_size = 16
+		self.batch_size = 8
 		self.adam_beta1 = 0.9
 		self.adam_beta2 = 0.999
 		self.initial_learning_rate = 0.002

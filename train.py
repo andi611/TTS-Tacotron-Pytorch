@@ -214,8 +214,13 @@ def train(model,
 
 			duration = time.time() - start
 			if global_step > 0 and global_step % checkpoint_interval == 0:
-				save_states(global_step, mel_outputs, linear_outputs, attn, y, checkpoint_dir)
-				save_checkpoint(model, optimizer, global_step, checkpoint_dir, global_epoch)
+				try:
+					save_states(global_step, mel_outputs, linear_outputs, attn, y, checkpoint_dir)
+					save_checkpoint(model, optimizer, global_step, checkpoint_dir, global_epoch)
+				except:
+					print()
+					print('An error has occured during saving! Please attend and handle manually!')
+					pass
 				log = '[{}] total_L: {:.3f}, mel_L: {:.3f}, lin_L: {:.3f}, gate_L: {:.3f}, grad: {:.3f}, lr: {:.5f}, t: {:.2f}s, saved: T'.format(global_step, total_L, mel_L, linear_L, gate_L, grad_norm, current_lr, duration)
 				print(log)
 			elif global_step % 5 == 0:
